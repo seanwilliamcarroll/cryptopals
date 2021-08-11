@@ -4,8 +4,8 @@
 
 module Main where
 
-import Data.Bits
-import Data.Word
+import           Data.Bits
+import           Data.Word
 
 type HexChar = Word8
 type HexString = [HexChar]
