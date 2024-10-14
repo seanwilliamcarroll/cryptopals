@@ -1,12 +1,12 @@
 #include <iostream>
 
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <limits>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <cctype>
 #include <vector>
 
 using RawBytes = std::vector<uint8_t>;
@@ -150,13 +150,13 @@ RawBytes do_xor(const RawBytes &input, uint8_t key) {
 }
 
 const FreqMap english_freq_map = {
-  {' ', 0.127 * 2}, {'e', 0.127},   {'t', 0.091}, {'?',  0.085},
-  {'a', 0.082},  {'o', 0.075},  {'i', 0.070},
-  {'n', 0.067},   {'s', 0.063},  {'h', 0.061},  {'r', 0.060},  {'d', 0.043},
-  {'l', 0.040},   {'c', 0.028},  {'u', 0.028},  {'m', 0.024},  {'w', 0.024},
-  {'f', 0.022},   {'g', 0.020},  {'y', 0.020},  {'p', 0.019},  {'b', 0.015},
-  {'v', 0.0098},  {'k', 0.0077}, {'j', 0.0015}, {'x', 0.0015}, {'q', 0.00095},
-  {'z', 0.00074},
+    {' ', 0.127 * 2}, {'e', 0.127},  {'t', 0.091},   {'?', 0.085},
+    {'a', 0.082},     {'o', 0.075},  {'i', 0.070},   {'n', 0.067},
+    {'s', 0.063},     {'h', 0.061},  {'r', 0.060},   {'d', 0.043},
+    {'l', 0.040},     {'c', 0.028},  {'u', 0.028},   {'m', 0.024},
+    {'w', 0.024},     {'f', 0.022},  {'g', 0.020},   {'y', 0.020},
+    {'p', 0.019},     {'b', 0.015},  {'v', 0.0098},  {'k', 0.0077},
+    {'j', 0.0015},    {'x', 0.0015}, {'q', 0.00095}, {'z', 0.00074},
 };
 
 FreqMap gen_frequency(const RawBytes &input) {
@@ -169,7 +169,8 @@ FreqMap gen_frequency(const RawBytes &input) {
     if (english_freq_map.find(byte) != english_freq_map.end()) {
       output[byte] += 1.0;
       valid = valid += 1.0;
-    } else if (english_freq_map.find(char(std::tolower(byte))) != english_freq_map.end()) {
+    } else if (english_freq_map.find(char(std::tolower(byte))) !=
+               english_freq_map.end()) {
       output[char(std::tolower(byte))] += 1.0;
       valid = valid += 1.0;
     } else {
@@ -206,6 +207,31 @@ std::pair<char, double> find_likely_single_xor(const RawBytes &input) {
     }
   }
   return std::make_pair(winner, score);
+}
+
+RawBytes from_ascii_string(const std::string &input) {
+  RawBytes output;
+  output.reserve(input.size());
+
+  for (const auto character : input) {
+    output.push_back(character);
+  }
+  return output;
+}
+
+RawBytes encrypt_repeating_xor(const RawBytes &plain_text,
+                               const RawBytes &key) {
+  RawBytes output(plain_text);
+
+  size_t key_pointer = 0;
+  for (auto &character : output) {
+    character ^= key[key_pointer];
+    ++key_pointer;
+    if (key_pointer == key.size()) {
+      key_pointer = 0;
+    }
+  }
+  return output;
 }
 
 void c1() {
@@ -246,7 +272,8 @@ void c3() {
 
   const auto [winner, score] = find_likely_single_xor(output);
   RawBytes xord_output = do_xor(output, char(winner));
-  std::cout << "XOR with: " << std::to_string(winner) << std::endl;
+  std::cout << "XOR with: " << std::to_string(winner) << " (" << winner << ")"
+            << std::endl;
   std::cout << "Output ascii string: ";
   to_ascii_string(std::cout, xord_output) << std::endl;
 }
@@ -599,10 +626,24 @@ void c4() {
   std::cout << "Input  ascii string: ";
   to_ascii_string(std::cout, output) << std::endl;
   RawBytes xord_output = do_xor(output, char(best_winner));
-  std::cout << "XOR with: " << std::to_string(best_winner)
+  std::cout << "XOR with: " << std::to_string(best_winner) << " ("
+            << best_winner << ")"
             << " with Score: " << best_score << std::endl;
   std::cout << "Output ascii string: ";
   to_ascii_string(std::cout, xord_output) << std::endl;
+}
+
+void c5() {
+  const std::string input("Burning 'em, if you ain't quick and nimble\nI go "
+                          "crazy when I hear a cymbal");
+
+  RawBytes plain_text = from_ascii_string(input);
+  RawBytes key = from_ascii_string(std::string("ICE"));
+
+  RawBytes output = encrypt_repeating_xor(plain_text, key);
+
+  std::cout << "Output hex string: ";
+  to_hex_string(std::cout, output) << std::endl;
 }
 
 int main() {
@@ -610,7 +651,8 @@ int main() {
   // c1();
   // c2();
   // c3();
-  c4();
+  // c4();
+  c5();
 
   return 0;
 }
