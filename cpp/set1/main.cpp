@@ -125,6 +125,15 @@ std::ostream &to_base64_string(std::ostream &out, const RawBytes &input) {
   return out;
 }
 
+RawBytes do_xor(const RawBytes &input_1, const RawBytes &input_2) {
+  RawBytes output(input_1);
+
+  for (size_t iter = 0; iter < output.size(); ++iter) {
+    output[iter] ^= input_2[iter];
+  }
+  return output;
+}
+
 void c1() {
 
   const std::string input("49276d206b696c6c696e6720796f757220627261696e206c696b"
@@ -137,18 +146,28 @@ void c1() {
   to_hex_string(std::cout, output) << std::endl;
   std::cout << "New   Base64 string: ";
   to_base64_string(std::cout, output) << std::endl;
-
 }
 
 void c2() {
-  
 
+  const std::string input_1("1c0111001f010100061a024b53535009181c");
+  const std::string input_2("686974207468652062756c6c277320657965");
+
+  RawBytes output_1 = from_hex_string(input_1);
+  RawBytes output_2 = from_hex_string(input_2);
+
+  RawBytes output_xored = do_xor(output_1, output_2);
+
+  std::cout << "Input hex string: " << input_1 << std::endl;
+  std::cout << "Input hex string: " << input_2 << std::endl;
+  std::cout << "XOR'd hex string: ";
+  to_hex_string(std::cout, output_xored) << std::endl;
 }
-
 
 int main() {
   std::cout << "Cryptopals" << std::endl;
-  c1();
-  
+  // c1();
+  c2();
+
   return 0;
 }
