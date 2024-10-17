@@ -1,28 +1,23 @@
 #pragma once
 
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
+#include <util.hpp>
 
 #include <algorithm>
 #include <bit>
 #include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 #include <limits>
+#include <span>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 using RawBytes = std::vector<uint8_t>;
-
-void throw_invalid_argument(uint8_t input) {
-  std::stringstream error_stream;
-  error_stream << "Unexpected character: " << char(input)
-               << " value: " << int(input);
-  throw std::invalid_argument(error_stream.str());
-}
 
 RawBytes from_hex_string(const std::string &input) {
   const size_t length = std::ceil<size_t>(double(input.size()) / 2);
@@ -147,45 +142,12 @@ std::ostream &to_ascii_string(std::ostream &out, const RawBytes &input) {
   return out;
 }
 
-RawBytes do_xor(const RawBytes &input_1, const RawBytes &input_2) {
-  RawBytes output(input_1);
-
-  for (size_t iter = 0; iter < output.size(); ++iter) {
-    output[iter] ^= input_2[iter];
-  }
-  return output;
-}
-
-RawBytes do_xor(const RawBytes &input, uint8_t key) {
-  RawBytes output(input);
-
-  for (size_t iter = 0; iter < output.size(); ++iter) {
-    output[iter] ^= key;
-  }
-  return output;
-}
-
 RawBytes from_ascii_string(const std::string &input) {
   RawBytes output;
   output.reserve(input.size());
 
   for (const auto character : input) {
     output.push_back(character);
-  }
-  return output;
-}
-
-RawBytes encrypt_repeating_xor(const RawBytes &plain_text,
-                               const RawBytes &key) {
-  RawBytes output(plain_text);
-
-  size_t key_pointer = 0;
-  for (auto &character : output) {
-    character ^= key[key_pointer];
-    ++key_pointer;
-    if (key_pointer == key.size()) {
-      key_pointer = 0;
-    }
   }
   return output;
 }
@@ -266,15 +228,4 @@ RawBytes from_base64_string(const std::string &input) {
     }
   }
   return output;
-}
-
-size_t calc_hamming_dist(const RawBytes &input_a, const RawBytes &input_b) {
-  size_t distance = 0;
-
-  // Assume same length
-  for (size_t iter = 0; iter < input_a.size(); ++iter) {
-    distance += std::popcount(size_t(input_a[iter] ^ input_b[iter]));
-  }
-
-  return distance;
 }

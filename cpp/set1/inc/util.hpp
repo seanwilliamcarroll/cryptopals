@@ -53,3 +53,10 @@ std::string strip_newlines(const std::string &input) {
   output.erase(std::remove(output.begin(), output.end(), '\n'), output.end());
   return output;
 }
+
+void throw_invalid_argument(uint8_t input) {
+  std::stringstream error_stream;
+  error_stream << "Unexpected character: " << char(input)
+               << " value: " << int(input);
+  throw std::invalid_argument(error_stream.str());
+}

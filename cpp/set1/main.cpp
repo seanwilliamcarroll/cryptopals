@@ -1,3 +1,4 @@
+#include <crypt.hpp>
 #include <freq_map.hpp>
 #include <raw_bytes.hpp>
 #include <util.hpp>
@@ -101,50 +102,21 @@ void c5() {
 }
 
 void c6() {
-  {
-    const std::string input_a("this is a test");
-    const std::string input_b("wokka wokka!!!");
-
-    RawBytes input_a_raw = from_ascii_string(input_a);
-    RawBytes input_b_raw = from_ascii_string(input_b);
-
-    size_t hamming_dist = calc_hamming_dist(input_a_raw, input_b_raw);
-
-    std::cout << "Distance between: " << std::endl;
-    std::cout << input_a << std::endl;
-    std::cout << input_b << std::endl;
-    std::cout << "is " << hamming_dist << std::endl;
-  }
-
-  {
-    const std::string base64_test("TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcmsu");
-    RawBytes base64_test_raw = from_base64_string(base64_test);
-    std::cout << "Base64 String: " << base64_test << std::endl;
-    std::cout << "Ascii  String: ";
-    to_ascii_string(std::cout, base64_test_raw) << std::endl;
-  }
-
-  {
-    const std::string base64_input =
+  const std::string base64_input =
       load_from_file("/Users/sean/cryptopals/cpp/set1/6.txt");
-    std::cout << "Length: " << base64_input.size() << std::endl;
-    std::cout << "Num newlines: " << std::ranges::count(base64_input, '\n')
-              << std::endl;
-    const std::string base64_input_stripped = strip_newlines(base64_input);
-    std::cout << "Length: " << base64_input_stripped.size() << std::endl;
-    std::cout << "Num newlines: "
-              << std::ranges::count(base64_input_stripped, '\n') << std::endl;
-    const RawBytes raw_input = from_base64_string(base64_input_stripped);
+  const std::string base64_input_stripped = strip_newlines(base64_input);
+  const RawBytes raw_input = from_base64_string(base64_input_stripped);
 
-    std::stringstream new_base64_stream;
-    to_base64_string(new_base64_stream, raw_input);
-    const std::string new_base64 = new_base64_stream.str();
-    std::cout << "Length: " << new_base64.size() << std::endl;
-    std::cout << "Num newlines: " << std::ranges::count(new_base64, '\n')
-              << std::endl;
-    std::cout << "Are both strings the same?: "
-              << (new_base64 == base64_input_stripped) << std::endl;
-  }
+  const size_t likely_key_length = find_likely_key_length(raw_input, 2, 40);
+  std::cout << "Likely Key length: " << likely_key_length << std::endl;
+
+  const RawBytes likely_key = find_likely_key(raw_input, likely_key_length);
+  std::cout << "Likely Key: ";
+  to_ascii_string(std::cout, likely_key) << std::endl;
+
+  std::cout << "Decrypted text:" << std::endl << std::endl;
+  const RawBytes decrypted_raw = encrypt_repeating_xor(raw_input, likely_key);
+  to_ascii_string(std::cout, decrypted_raw) << std::endl << std::endl;
 }
 
 int main() {

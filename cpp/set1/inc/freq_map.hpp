@@ -60,18 +60,3 @@ double score_freq(const FreqMap &input) {
   }
   return accumulate;
 }
-
-std::pair<char, double> find_likely_single_xor(const RawBytes &input) {
-  double score = std::numeric_limits<double>::max();
-  char winner = 0;
-  for (size_t iter = 0; iter < 256; ++iter) {
-    RawBytes xord_output = do_xor(input, char(iter));
-    FreqMap freq_map = gen_frequency(xord_output);
-    double test_score = score_freq(freq_map);
-    if (test_score < score) {
-      score = test_score;
-      winner = char(iter);
-    }
-  }
-  return std::make_pair(winner, score);
-}
