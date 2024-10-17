@@ -54,6 +54,11 @@ std::string strip_newlines(const std::string &input) {
   return output;
 }
 
+std::string load_and_strip(const std::string &filename) {
+  const std::string base64_input = load_from_file(filename);
+  return strip_newlines(base64_input);
+}
+
 void throw_invalid_argument(uint8_t input) {
   std::stringstream error_stream;
   error_stream << "Unexpected character: " << char(input)

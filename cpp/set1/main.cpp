@@ -3,6 +3,8 @@
 #include <raw_bytes.hpp>
 #include <util.hpp>
 
+#include <openssl/ssl.h>
+
 #include <iostream>
 
 #include <algorithm>
@@ -103,9 +105,8 @@ void c5() {
 
 void c6() {
   const std::string base64_input =
-      load_from_file("/Users/sean/cryptopals/cpp/set1/6.txt");
-  const std::string base64_input_stripped = strip_newlines(base64_input);
-  const RawBytes raw_input = from_base64_string(base64_input_stripped);
+      load_and_strip("/Users/sean/cryptopals/cpp/set1/6.txt");
+  const RawBytes raw_input = from_base64_string(base64_input);
 
   const size_t likely_key_length = find_likely_key_length(raw_input, 2, 40);
   std::cout << "Likely Key length: " << likely_key_length << std::endl;
@@ -119,6 +120,50 @@ void c6() {
   to_ascii_string(std::cout, decrypted_raw) << std::endl << std::endl;
 }
 
+void c7() {
+  const std::string base64_input =
+      load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
+  RawBytes raw_input = from_base64_string(base64_input);
+  const std::string input_key = "YELLOW SUBMARINE";
+  RawBytes raw_key = from_ascii_string(input_key);
+
+  EVP_CIPHER_CTX *ctx;
+
+  EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-ECB-128", NULL);
+
+  if (!(ctx = EVP_CIPHER_CTX_new())) {
+    throw std::runtime_error("Failed to new cipher ctx!");
+  }
+
+  if (1 !=
+      EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, raw_key.data(), NULL)) {
+    throw std::runtime_error("Failed to decrypt init!");
+  }
+
+  int plaintext_len;
+  int len;
+  unsigned char plaintext[4096];
+
+  if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, raw_input.data(),
+                             raw_input.size())) {
+    throw std::runtime_error("Failed to decrypt update!");
+  }
+  plaintext_len = len;
+
+  if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+    throw std::runtime_error("Failed to decrypt finalize!");
+  }
+  plaintext_len += len;
+
+  std::cout << "Decrypted length: " << plaintext_len << std::endl;
+  std::cout << plaintext << std::endl;
+
+  // Cleanup
+
+  EVP_CIPHER_free(cipher);
+  EVP_CIPHER_CTX_free(ctx);
+}
+
 int main() {
   std::cout << "Cryptopals" << std::endl;
   // c1();
@@ -126,7 +171,8 @@ int main() {
   // c3();
   // c4();
   // c5();
-  c6();
+  // c6();
+  c7();
 
   return 0;
 }
