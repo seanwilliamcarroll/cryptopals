@@ -5,7 +5,11 @@ add_executable(crypt-exe main.cpp)
 set_target_properties(crypt-exe PROPERTIES OUTPUT_NAME crypt)
 
 add_library(crypt-lib STATIC
-  crypt.cpp)
+  aes.cpp
+  util.cpp
+  raw_bytes.cpp
+  freq_map.cpp
+)
 
 set_target_properties(crypt-lib PROPERTIES OUTPUT_NAME crypt)
 

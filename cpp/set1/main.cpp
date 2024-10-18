@@ -1,16 +1,9 @@
 #include <crypt.hpp>
-#include <freq_map.hpp>
-#include <raw_bytes.hpp>
-#include <util.hpp>
 
 #include <openssl/ssl.h>
 
 #include <iostream>
 
-#include <algorithm>
-#include <bit>
-#include <cctype>
-#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -121,47 +114,70 @@ void c6() {
 }
 
 void c7() {
-  const std::string base64_input =
-      load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
-  RawBytes raw_input = from_base64_string(base64_input);
-  const std::string input_key = "YELLOW SUBMARINE";
-  RawBytes raw_key = from_ascii_string(input_key);
+  {
+    const std::string base64_input =
+        load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
+    RawBytes raw_input = from_base64_string(base64_input);
+    const std::string input_key = "YELLOW SUBMARINE";
+    RawBytes raw_key = from_ascii_string(input_key);
 
-  EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx;
 
-  EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-ECB-128", NULL);
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-ECB-128", NULL);
 
-  if (!(ctx = EVP_CIPHER_CTX_new())) {
-    throw std::runtime_error("Failed to new cipher ctx!");
+    if (!(ctx = EVP_CIPHER_CTX_new())) {
+      throw std::runtime_error("Failed to new cipher ctx!");
+    }
+
+    if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, raw_key.data(),
+                                NULL)) {
+      throw std::runtime_error("Failed to decrypt init!");
+    }
+
+    int plaintext_len;
+    int len;
+    unsigned char plaintext[4096];
+
+    if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, raw_input.data(),
+                               raw_input.size())) {
+      throw std::runtime_error("Failed to decrypt update!");
+    }
+    plaintext_len = len;
+
+    if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+      throw std::runtime_error("Failed to decrypt finalize!");
+    }
+    plaintext_len += len;
+
+    std::cout << "Decrypted length: " << plaintext_len << std::endl;
+    std::cout << plaintext << std::endl;
+
+    // Cleanup
+
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
   }
 
-  if (1 !=
-      EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, raw_key.data(), NULL)) {
-    throw std::runtime_error("Failed to decrypt init!");
+  {
+    const std::string base64_input =
+        load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
+    RawBytes raw_input = from_base64_string(base64_input);
+    const std::string input_key = "YELLOW SUBMARINE";
+    RawBytes raw_key = from_ascii_string(input_key);
+
+    ByteBlock block = from_raw_bytes_to_byte_block(raw_key);
+    std::cout << "Key: ";
+    to_ascii_string(std::cout, raw_key) << std::endl;
+
+    std::cout << "Key as block: " << std::endl;
+    pretty_print_block<size_t>(std::cout, block);
+    std::cout << "Key as char block: " << std::endl;
+    pretty_print_block<char>(std::cout, block);
+
+    RawBytes reassembled_key = from_byte_block_to_raw_bytes(block);
+    std::cout << "Reassembled Key: ";
+    to_ascii_string(std::cout, reassembled_key) << std::endl;
   }
-
-  int plaintext_len;
-  int len;
-  unsigned char plaintext[4096];
-
-  if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, raw_input.data(),
-                             raw_input.size())) {
-    throw std::runtime_error("Failed to decrypt update!");
-  }
-  plaintext_len = len;
-
-  if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
-    throw std::runtime_error("Failed to decrypt finalize!");
-  }
-  plaintext_len += len;
-
-  std::cout << "Decrypted length: " << plaintext_len << std::endl;
-  std::cout << plaintext << std::endl;
-
-  // Cleanup
-
-  EVP_CIPHER_free(cipher);
-  EVP_CIPHER_CTX_free(ctx);
 }
 
 int main() {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <aes.hpp>
 #include <freq_map.hpp>
 #include <raw_bytes.hpp>
 #include <util.hpp>
