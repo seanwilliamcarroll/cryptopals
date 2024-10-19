@@ -195,55 +195,53 @@ constexpr inline std::array<ByteColumn, 11> ROUND_CONSTANT = {{
     {0x36, 0, 0, 0},
 }};
 
-template <size_t KEY_LENGTH_WORDS, size_t NUM_ROUNDS, typename KeyScheduleType,
-          typename KeyType>
+template <typename KeyScheduleType, typename KeyType>
 KeyScheduleType gen_key_schedule(const KeyType &key) {
+  constexpr size_t KEY_SCHEDULE_SIZE_WORDS = std::tuple_size<KeyScheduleType>{};
+  constexpr size_t KEY_SIZE_WORDS = std::tuple_size<KeyType>{};
   KeyScheduleType key_schedule_words;
 
   size_t index = 0;
-  while (index < KEY_LENGTH_WORDS) {
+  while (index < KEY_SIZE_WORDS) {
     key_schedule_words[index] = key[index];
     ++index;
   }
 
-  index = KEY_LENGTH_WORDS;
-  while (index < BLOCK_SIZE_WORDS * (NUM_ROUNDS + 1)) {
+  index = KEY_SIZE_WORDS;
+  while (index < KEY_SCHEDULE_SIZE_WORDS) {
     ByteColumn temp = key_schedule_words[index - 1];
-    if (index % KEY_LENGTH_WORDS == 0) {
+    if (index % KEY_SIZE_WORDS == 0) {
       rot_word(temp);
       sub_word(temp);
-      temp = do_xor(temp, ROUND_CONSTANT[index / KEY_LENGTH_WORDS]);
-    } else if (KEY_LENGTH_WORDS > 6 && index % KEY_LENGTH_WORDS == 4) {
+      temp = do_xor(temp, ROUND_CONSTANT[index / KEY_SIZE_WORDS]);
+    } else if (KEY_SIZE_WORDS > 6 && index % KEY_SIZE_WORDS == 4) {
       sub_word(temp);
     }
     key_schedule_words[index] =
-        do_xor(key_schedule_words[index - KEY_LENGTH_WORDS], temp);
+        do_xor(key_schedule_words[index - KEY_SIZE_WORDS], temp);
     ++index;
   }
   return key_schedule_words;
 }
 
 AES128KeySchedule gen_key_schedule(const AES128Key &key) {
-  return gen_key_schedule<AES_128_KEY_LENGTH_WORDS, AES_128_NUM_ROUNDS,
-                          AES128KeySchedule, AES128Key>(key);
+  return gen_key_schedule<AES128KeySchedule, AES128Key>(key);
 }
 
 AES192KeySchedule gen_key_schedule(const AES192Key &key) {
-  return gen_key_schedule<AES_192_KEY_LENGTH_WORDS, AES_192_NUM_ROUNDS,
-                          AES192KeySchedule, AES192Key>(key);
+  return gen_key_schedule<AES192KeySchedule, AES192Key>(key);
 }
 
 AES256KeySchedule gen_key_schedule(const AES256Key &key) {
-  return gen_key_schedule<AES_256_KEY_LENGTH_WORDS, AES_256_NUM_ROUNDS,
-                          AES256KeySchedule, AES256Key>(key);
+  return gen_key_schedule<AES256KeySchedule, AES256Key>(key);
 }
 
-template <size_t KEY_LENGTH_WORDS, typename KeyType>
-KeyType gen_key(const RawBytes &flat_key) {
+template <typename KeyType> KeyType gen_key(const RawBytes &flat_key) {
+  constexpr size_t KEY_SIZE_WORDS = std::tuple_size<KeyType>{};
   KeyType key;
-  for (size_t word_index = 0; word_index < KEY_LENGTH_WORDS; ++word_index) {
+  for (size_t word_index = 0; word_index < KEY_SIZE_WORDS; ++word_index) {
     for (size_t byte_index = 0; byte_index < WORD_SIZE_BYTES; ++byte_index) {
-      size_t flat_index = (word_index * KEY_LENGTH_WORDS) + byte_index;
+      size_t flat_index = (word_index * KEY_SIZE_WORDS) + byte_index;
       key[word_index][byte_index] = flat_key[flat_index];
     }
   }
@@ -251,13 +249,13 @@ KeyType gen_key(const RawBytes &flat_key) {
 }
 
 AES128Key gen_aes128_key(const RawBytes &flat_key) {
-  return gen_key<AES_128_KEY_LENGTH_WORDS, AES128Key>(flat_key);
+  return gen_key<AES128Key>(flat_key);
 }
 
 AES192Key gen_aes192_key(const RawBytes &flat_key) {
-  return gen_key<AES_192_KEY_LENGTH_WORDS, AES192Key>(flat_key);
+  return gen_key<AES192Key>(flat_key);
 }
 
 AES256Key gen_aes256_key(const RawBytes &flat_key) {
-  return gen_key<AES_256_KEY_LENGTH_WORDS, AES256Key>(flat_key);
+  return gen_key<AES256Key>(flat_key);
 }

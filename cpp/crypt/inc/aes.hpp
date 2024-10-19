@@ -54,8 +54,9 @@ std::ostream &pretty_print(std::ostream &out, const ByteBlock &input) {
 
 template <typename CastType, typename KeyScheduleType>
 std::ostream &pretty_print(std::ostream &out, const KeyScheduleType &input) {
+  constexpr size_t KEY_SCHEDULE_SIZE_WORDS = std::tuple_size<KeyScheduleType>{};
   for (size_t round_index = 0;
-       round_index < std::tuple_size<KeyScheduleType>{} / BLOCK_SIZE_WORDS;
+       round_index < KEY_SCHEDULE_SIZE_WORDS / BLOCK_SIZE_WORDS;
        ++round_index) {
     for (size_t col_index = 0; col_index < BLOCK_SIZE_WORDS; ++col_index) {
       pretty_print<CastType>(
