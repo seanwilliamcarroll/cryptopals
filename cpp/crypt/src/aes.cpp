@@ -66,6 +66,16 @@ RawBytes from_byte_block_to_raw_bytes(const ByteBlock &input) {
   return from_block<RawBytes>(input);
 }
 
+void transpose(ByteBlock &input) {
+  ByteBlock output;
+  for (size_t col_index = 0; col_index < WORD_SIZE_BYTES; ++col_index) {
+    for (size_t row_index = 0; row_index < BLOCK_SIZE_WORDS; ++row_index) {
+      output[row_index][col_index] = input[col_index][row_index];
+    }
+  }
+  input = output;
+}
+
 void rot_word(ByteColumn &input) {
   input = {input[1], input[2], input[3], input[0]};
 }
@@ -168,10 +178,24 @@ void sub_word(ByteBlock &input, const size_t column_index) {
   sub_word(input[column_index]);
 }
 
+void sub_bytes(ByteBlock &input) {
+  sub_word(input, 0);
+  sub_word(input, 1);
+  sub_word(input, 2);
+  sub_word(input, 3);
+}
+
 void inv_sub_word(ByteColumn &input) { base_sub_word(INV_S_BOX, input); }
 
 void inv_sub_word(ByteBlock &input, const size_t column_index) {
   inv_sub_word(input[column_index]);
+}
+
+void inv_sub_bytes(ByteBlock &input) {
+  inv_sub_word(input, 0);
+  inv_sub_word(input, 1);
+  inv_sub_word(input, 2);
+  inv_sub_word(input, 3);
 }
 
 // AES128Key make_aes128_key() {}
@@ -179,6 +203,15 @@ void inv_sub_word(ByteBlock &input, const size_t column_index) {
 ByteColumn do_xor(const ByteColumn &input_a, const ByteColumn &input_b) {
   return {uint8_t(input_a[0] ^ input_b[0]), uint8_t(input_a[1] ^ input_b[1]),
           uint8_t(input_a[2] ^ input_b[2]), uint8_t(input_a[3] ^ input_b[3])};
+}
+
+ByteBlock do_xor(const ByteBlock &input_a, const ByteBlock &input_b) {
+  ByteBlock output;
+  output[0] = do_xor(input_a[0], input_b[0]);
+  output[1] = do_xor(input_a[1], input_b[1]);
+  output[2] = do_xor(input_a[2], input_b[2]);
+  output[3] = do_xor(input_a[3], input_b[3]);
+  return output;
 }
 
 constexpr inline std::array<ByteColumn, 11> ROUND_CONSTANT = {{
@@ -258,4 +291,147 @@ AES192Key gen_aes192_key(const RawBytes &flat_key) {
 
 AES256Key gen_aes256_key(const RawBytes &flat_key) {
   return gen_key<AES256Key>(flat_key);
+}
+
+void shift_row(ByteBlock &input, const size_t row_index,
+               const size_t shift_amount) {
+  ByteColumn output_row;
+  for (size_t col_index = 0; col_index < BLOCK_SIZE_WORDS; ++col_index) {
+    output_row[col_index] =
+        input[row_index][(col_index + shift_amount) % BLOCK_SIZE_WORDS];
+  }
+  for (size_t col_index = 0; col_index < BLOCK_SIZE_WORDS; ++col_index) {
+    input[row_index][col_index] = output_row[col_index];
+  }
+}
+
+void shift_rows(ByteBlock &input) {
+  shift_row(input, 1, 1);
+  shift_row(input, 2, 2);
+  shift_row(input, 3, 3);
+}
+
+void mix_column(ByteColumn &input) {
+  ByteColumn input_copy(input);
+  ByteColumn input_mul2;
+
+  for (size_t index = 0; index < WORD_SIZE_BYTES; ++index) {
+    // Galois multiply by 2
+    const uint8_t is_high_bit_set = (input[index] >> 7) & 0x1;
+    input_mul2[index] = input[index] << 1;
+    if (is_high_bit_set) {
+      input_mul2[index] ^= 0x1B;
+    }
+  }
+
+  // input_copy ^ input_mul2 is multiplying by 3 in Galois field
+  input[0] = input_mul2[0] ^ input_copy[3] ^ input_copy[2] ^ input_mul2[1] ^
+             input_copy[1];
+  input[1] = input_mul2[1] ^ input_copy[0] ^ input_copy[3] ^ input_mul2[2] ^
+             input_copy[2];
+  input[2] = input_mul2[2] ^ input_copy[1] ^ input_copy[0] ^ input_mul2[3] ^
+             input_copy[3];
+  input[3] = input_mul2[3] ^ input_copy[2] ^ input_copy[1] ^ input_mul2[0] ^
+             input_copy[0];
+}
+
+void mix_columns(ByteBlock &input) {
+  // ?????
+  transpose(input);
+  mix_column(input[0]);
+  mix_column(input[1]);
+  mix_column(input[2]);
+  mix_column(input[3]);
+  transpose(input);
+}
+
+template <typename KeyScheduleType>
+ByteBlock get_round_key(const KeyScheduleType &key_schedule,
+                        const size_t round_index) {
+  ByteBlock round_key = {{
+      key_schedule[(round_index * BLOCK_SIZE_WORDS)],
+      key_schedule[(round_index * BLOCK_SIZE_WORDS) + 1],
+      key_schedule[(round_index * BLOCK_SIZE_WORDS) + 2],
+      key_schedule[(round_index * BLOCK_SIZE_WORDS) + 3],
+  }};
+  transpose(round_key);
+  return round_key;
+}
+
+template <typename KeyScheduleType>
+void add_round_key(ByteBlock &input, const KeyScheduleType &key_schedule,
+                   const size_t round_index) {
+  const ByteBlock round_key = get_round_key(key_schedule, round_index);
+  input = do_xor(input, round_key);
+}
+
+void quick_print(const std::string &msg, const ByteBlock &state) {
+  RawBytes state_raw = from_byte_block_to_raw_bytes(state);
+  std::cout << msg << "  :  ";
+  to_hex_string(std::cout, state_raw) << std::endl;
+}
+
+template <typename KeyScheduleType>
+void AES_cipher(ByteBlock &input, ByteBlock &output,
+                const KeyScheduleType &key_schedule) {
+  constexpr size_t KEY_SCHEDULE_SIZE_WORDS = std::tuple_size<KeyScheduleType>{};
+  constexpr size_t NUM_ROUNDS =
+      (KEY_SCHEDULE_SIZE_WORDS / BLOCK_SIZE_WORDS) - 1;
+
+  ByteBlock state(input);
+
+  quick_print("round[ 0].input", state);
+
+  add_round_key(state, key_schedule, 0);
+
+  quick_print("round[ 0].k_sch",
+              get_round_key<KeyScheduleType>(key_schedule, 0));
+
+  for (size_t round_index = 1; round_index < NUM_ROUNDS; ++round_index) {
+    quick_print("round[" + std::string(round_index < 10 ? " " : "") +
+                    std::to_string(round_index) + "].input",
+                state);
+
+    sub_bytes(state);
+    quick_print("round[" + std::string(round_index < 10 ? " " : "") +
+                    std::to_string(round_index) + "].s_box",
+                state);
+
+    shift_rows(state);
+    quick_print("round[" + std::string(round_index < 10 ? " " : "") +
+                    std::to_string(round_index) + "].s_row",
+                state);
+
+    mix_columns(state);
+    quick_print("round[" + std::string(round_index < 10 ? " " : "") +
+                    std::to_string(round_index) + "].m_col",
+                state);
+
+    add_round_key(state, key_schedule, round_index);
+    quick_print("round[" + std::string(round_index < 10 ? " " : "") +
+                    std::to_string(round_index) + "].k_sch",
+                get_round_key<KeyScheduleType>(key_schedule, round_index));
+  }
+  quick_print("round[" + std::to_string(NUM_ROUNDS) + "].input", state);
+  sub_bytes(state);
+  shift_rows(state);
+  add_round_key(state, key_schedule, NUM_ROUNDS);
+
+  output = state;
+  quick_print("output         ", state);
+}
+
+void AES_128_cipher(ByteBlock &input, ByteBlock &output,
+                    const AES128KeySchedule &key_schedule) {
+  AES_cipher(input, output, key_schedule);
+}
+
+void AES_192_cipher(ByteBlock &input, ByteBlock &output,
+                    const AES192KeySchedule &key_schedule) {
+  AES_cipher(input, output, key_schedule);
+}
+
+void AES_256_cipher(ByteBlock &input, ByteBlock &output,
+                    const AES256KeySchedule &key_schedule) {
+  AES_cipher(input, output, key_schedule);
 }
