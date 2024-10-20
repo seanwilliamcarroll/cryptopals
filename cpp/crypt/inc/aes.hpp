@@ -92,20 +92,23 @@ AES128KeySchedule gen_key_schedule(const AES128Key &key);
 AES192KeySchedule gen_key_schedule(const AES192Key &key);
 AES256KeySchedule gen_key_schedule(const AES256Key &key);
 
-void AES_128_cipher(ByteBlock &input, ByteBlock &output,
+void AES_128_cipher(const ByteBlock &input, ByteBlock &output,
                     const AES128KeySchedule &key_schedule);
-
-void AES_192_cipher(ByteBlock &input, ByteBlock &output,
+void AES_192_cipher(const ByteBlock &input, ByteBlock &output,
                     const AES192KeySchedule &key_schedule);
-
-void AES_256_cipher(ByteBlock &input, ByteBlock &output,
+void AES_256_cipher(const ByteBlock &input, ByteBlock &output,
                     const AES256KeySchedule &key_schedule);
 
-void AES_128_inv_cipher(ByteBlock &input, ByteBlock &output,
+void AES_128_inv_cipher(const ByteBlock &input, ByteBlock &output,
                         const AES128KeySchedule &key_schedule);
-
-void AES_192_inv_cipher(ByteBlock &input, ByteBlock &output,
+void AES_192_inv_cipher(const ByteBlock &input, ByteBlock &output,
                         const AES192KeySchedule &key_schedule);
-
-void AES_256_inv_cipher(ByteBlock &input, ByteBlock &output,
+void AES_256_inv_cipher(const ByteBlock &input, ByteBlock &output,
                         const AES256KeySchedule &key_schedule);
+
+RawBytes AES_128_decrypt(const RawBytes &ciphertext_raw,
+                         const RawBytes &key_raw);
+RawBytes AES_192_decrypt(const RawBytes &ciphertext_raw,
+                         const RawBytes &key_raw);
+RawBytes AES_256_decrypt(const RawBytes &ciphertext_raw,
+                         const RawBytes &key_raw);

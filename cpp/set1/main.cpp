@@ -158,125 +158,97 @@ void c7_easy() {
   EVP_CIPHER_CTX_free(ctx);
 }
 
+void c7_kat() {
+  RawBytes key_raw{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                   0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
+  auto aes_128_key = gen_aes128_key(key_raw);
+  auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
+  std::cout << "Key Schedule:" << std::endl;
+  std::cout << std::hex;
+  pretty_print<int>(std::cout, aes_128_key_schedule);
+
+  RawBytes plaintext_raw{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                         0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+  ByteBlock plaintext = from_raw_bytes_to_byte_block(plaintext_raw);
+  ByteBlock ciphertext;
+  AES_128_cipher(plaintext, ciphertext, aes_128_key_schedule);
+
+  RawBytes ciphertext_raw = from_byte_block_to_raw_bytes(ciphertext);
+
+  std::cout << "Key: " << std::endl;
+  to_hex_string(std::cout, key_raw) << std::endl;
+
+  std::cout << "Plaintext: " << std::endl;
+  to_hex_string(std::cout, plaintext_raw) << std::endl;
+
+  std::cout << "Ciphertext: " << std::endl;
+  to_hex_string(std::cout, ciphertext_raw) << std::endl;
+
+  ByteBlock new_plaintext;
+  AES_128_inv_cipher(ciphertext, new_plaintext, aes_128_key_schedule);
+
+  RawBytes new_plaintext_raw = from_byte_block_to_raw_bytes(new_plaintext);
+
+  std::cout << "Key: " << std::endl;
+  to_hex_string(std::cout, key_raw) << std::endl;
+
+  std::cout << "Ciphertext: " << std::endl;
+  to_hex_string(std::cout, ciphertext_raw) << std::endl;
+
+  std::cout << "Plaintext: " << std::endl;
+  to_hex_string(std::cout, new_plaintext_raw) << std::endl;
+}
+
+void c7_key() {
+  const std::string base64_input =
+      load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
+  RawBytes raw_input = from_base64_string(base64_input);
+  const std::string input_key = "YELLOW SUBMARINE";
+  RawBytes raw_key = from_ascii_string(input_key);
+
+  ByteBlock block = from_raw_bytes_to_byte_block(raw_key);
+  std::cout << "Key: ";
+  to_ascii_string(std::cout, raw_key) << std::endl;
+
+  std::cout << "Key as block: " << std::endl;
+  pretty_print<size_t>(std::cout, block);
+  std::cout << "Key as char block: " << std::endl;
+  pretty_print<char>(std::cout, block);
+
+  RawBytes reassembled_key = from_byte_block_to_raw_bytes(block);
+  std::cout << "Reassembled Key: ";
+  to_ascii_string(std::cout, reassembled_key) << std::endl;
+}
+
+void c7_key_schedule() {
+  RawBytes test_vector(16, 0);
+  auto aes_128_key = gen_aes128_key(test_vector);
+  auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
+  std::cout << std::hex;
+  pretty_print<int>(std::cout, aes_128_key_schedule);
+  std::cout << std::endl;
+}
+
 void c7_my_aes() {
   const std::string base64_input =
       load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
-  RawBytes ciphertext_raw = from_base64_string(base64_input);
+  const RawBytes ciphertext_raw = from_base64_string(base64_input);
   const std::string input_key = "YELLOW SUBMARINE";
-  RawBytes key_raw = from_ascii_string(input_key);
+  const RawBytes key_raw = from_ascii_string(input_key);
 
-  auto aes_128_key = gen_aes128_key(key_raw);
-  auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
-
-  RawBytes plaintext_raw(ciphertext_raw.size());
-
-  const size_t num_blocks =
-      std::ceil<size_t>(double(ciphertext_raw.size()) / BLOCK_SIZE_BYTES);
-  for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
-    ByteBlock ciphertext =
-        from_raw_bytes_to_byte_block(ciphertext_raw, block_index);
-    ByteBlock plaintext;
-    AES_128_inv_cipher(ciphertext, plaintext, aes_128_key_schedule);
-
-    const bool is_last_block = (block_index == (num_blocks - 1));
-
-    from_byte_block_to_raw_bytes(plaintext, plaintext_raw, block_index,
-                                 is_last_block);
-  }
+  const RawBytes plaintext_raw = AES_128_decrypt(ciphertext_raw, key_raw);
   std::cout << "Decrypted text:" << std::endl << std::endl;
   to_ascii_string(std::cout, plaintext_raw) << std::endl << std::endl;
 }
 
 void c7() {
-
   // c7_easy();
 
-  {
-    const std::string base64_input =
-        load_and_strip("/Users/sean/cryptopals/cpp/set1/7.txt");
-    RawBytes raw_input = from_base64_string(base64_input);
-    const std::string input_key = "YELLOW SUBMARINE";
-    RawBytes raw_key = from_ascii_string(input_key);
+  // c7_key();
 
-    ByteBlock block = from_raw_bytes_to_byte_block(raw_key);
-    std::cout << "Key: ";
-    to_ascii_string(std::cout, raw_key) << std::endl;
+  // c7_key_schedule();
 
-    std::cout << "Key as block: " << std::endl;
-    pretty_print<size_t>(std::cout, block);
-    std::cout << "Key as char block: " << std::endl;
-    pretty_print<char>(std::cout, block);
-
-    RawBytes reassembled_key = from_byte_block_to_raw_bytes(block);
-    std::cout << "Reassembled Key: ";
-    to_ascii_string(std::cout, reassembled_key) << std::endl;
-
-    // shift_row(block, 1, 1);
-    // shift_row(block, 2, 2);
-    // shift_row(block, 3, 3);
-    // std::cout << "Key as block: " << std::endl;
-    // pretty_print<size_t>(std::cout, block);
-    // std::cout << "Key as char block: " << std::endl;
-    // pretty_print<char>(std::cout, block);
-  }
-
-  // {
-  //   std::cout << "Mix Column: " << std::endl << std::hex;
-  //   ByteColumn test_vector{0x2d, 0x26, 0x31, 0x4c};
-  //   pretty_print<int>(std::cout, test_vector) << std::endl;
-  //   mix_column(test_vector);
-  //   pretty_print<int>(std::cout, test_vector) << std::endl;
-  // }
-
-  // {
-  //   RawBytes test_vector(16, 0);
-  //   auto aes_128_key = gen_aes128_key(test_vector);
-  //   auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
-  //   std::cout << std::hex;
-  //   pretty_print<int>(std::cout, aes_128_key_schedule);
-  //   std::cout << std::endl;
-  // }
-
-  {
-    RawBytes key_raw{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f};
-    auto aes_128_key = gen_aes128_key(key_raw);
-    auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
-    std::cout << "Key Schedule:" << std::endl;
-    std::cout << std::hex;
-    pretty_print<int>(std::cout, aes_128_key_schedule);
-
-    RawBytes plaintext_raw{0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-                           0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
-    ByteBlock plaintext = from_raw_bytes_to_byte_block(plaintext_raw);
-    ByteBlock ciphertext;
-    AES_128_cipher(plaintext, ciphertext, aes_128_key_schedule);
-
-    RawBytes ciphertext_raw = from_byte_block_to_raw_bytes(ciphertext);
-
-    std::cout << "Key: " << std::endl;
-    to_hex_string(std::cout, key_raw) << std::endl;
-
-    std::cout << "Plaintext: " << std::endl;
-    to_hex_string(std::cout, plaintext_raw) << std::endl;
-
-    std::cout << "Ciphertext: " << std::endl;
-    to_hex_string(std::cout, ciphertext_raw) << std::endl;
-
-    ByteBlock new_plaintext;
-    AES_128_inv_cipher(ciphertext, new_plaintext, aes_128_key_schedule);
-
-    RawBytes new_plaintext_raw = from_byte_block_to_raw_bytes(new_plaintext);
-
-    std::cout << "Key: " << std::endl;
-    to_hex_string(std::cout, key_raw) << std::endl;
-
-    std::cout << "Ciphertext: " << std::endl;
-    to_hex_string(std::cout, ciphertext_raw) << std::endl;
-
-    std::cout << "Plaintext: " << std::endl;
-    to_hex_string(std::cout, new_plaintext_raw) << std::endl;
-  }
+  // c7_kat();
 
   c7_my_aes();
 }
