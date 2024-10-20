@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <set>
 #include <span>
 #include <sstream>
 #include <stdexcept>
@@ -721,4 +722,21 @@ RawBytes AES_256_decrypt(const RawBytes &ciphertext_raw,
   const auto aes_256_key = gen_aes256_key(key_raw);
   const auto aes_256_key_schedule = gen_key_schedule(aes_256_key);
   return AES_decrypt<AES256KeySchedule>(ciphertext_raw, aes_256_key_schedule);
+}
+
+bool detect_ecb(const RawBytes &input) {
+  const size_t num_blocks = input.size() / 16;
+
+  std::set<RawBytes> already_seen;
+
+  for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
+    const auto block_begin = input.begin() + (block_index * 16);
+    const auto block_end = input.begin() + ((block_index + 1) * 16);
+    const RawBytes block(block_begin, block_end);
+    if (already_seen.count(block) == 1) {
+      return true;
+    }
+    already_seen.insert(block);
+  }
+  return false;
 }

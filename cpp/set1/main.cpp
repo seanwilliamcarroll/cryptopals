@@ -7,6 +7,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -253,6 +254,19 @@ void c7() {
   c7_my_aes();
 }
 
+void c8() {
+  const std::vector<std::string> input_strings =
+      load_lines_from_file("/Users/sean/cryptopals/cpp/set1/8.txt");
+
+  for (const auto &input_str : input_strings) {
+    const RawBytes input_raw = from_hex_string(input_str);
+    if (detect_ecb(input_raw)) {
+      std::cout << "Detected ECB mode:" << std::endl;
+      std::cout << input_str << std::endl;
+    }
+  }
+}
+
 int main() {
   std::cout << "Cryptopals" << std::endl;
   // c1();
@@ -261,7 +275,8 @@ int main() {
   // c4();
   // c5();
   // c6();
-  c7();
+  // c7();
+  c8();
 
   return 0;
 }

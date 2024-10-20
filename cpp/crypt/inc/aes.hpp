@@ -112,3 +112,5 @@ RawBytes AES_192_decrypt(const RawBytes &ciphertext_raw,
                          const RawBytes &key_raw);
 RawBytes AES_256_decrypt(const RawBytes &ciphertext_raw,
                          const RawBytes &key_raw);
+
+bool detect_ecb(const RawBytes &input);
