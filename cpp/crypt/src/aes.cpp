@@ -310,6 +310,7 @@ void from_block(const ByteBlock &input, ContainerType &output,
     flat_end -= padding_bytes;
     output.resize(flat_end);
     if (padding_bytes == 0) {
+      output.resize(flat_offset);
       return;
     }
   }
@@ -319,9 +320,10 @@ void from_block(const ByteBlock &input, ContainerType &output,
     ByteColumn column = get_column(input, column_index);
     for (size_t row_index = 0; row_index < BLOCK_SIZE_WORDS; ++row_index) {
       const size_t flat_index = (column_index * WORD_SIZE_BYTES) + row_index;
-      if (flat_offset + flat_index < flat_end) {
-        output[flat_offset + flat_index] = column[row_index];
+      if (flat_offset + flat_index >= flat_end) {
+        return;
       }
+      output[flat_offset + flat_index] = column[row_index];
     }
   }
 }
