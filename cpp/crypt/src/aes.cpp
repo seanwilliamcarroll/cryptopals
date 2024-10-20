@@ -725,13 +725,13 @@ RawBytes AES_256_decrypt(const RawBytes &ciphertext_raw,
 }
 
 bool detect_ecb(const RawBytes &input) {
-  const size_t num_blocks = input.size() / 16;
+  const size_t num_blocks = input.size() / BLOCK_SIZE_BYTES;
 
   std::set<RawBytes> already_seen;
 
   for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
-    const auto block_begin = input.begin() + (block_index * 16);
-    const auto block_end = input.begin() + ((block_index + 1) * 16);
+    const auto block_begin = input.begin() + (block_index * BLOCK_SIZE_BYTES);
+    const auto block_end = input.begin() + ((block_index + 1) * BLOCK_SIZE_BYTES);
     const RawBytes block(block_begin, block_end);
     if (already_seen.count(block) == 1) {
       return true;
