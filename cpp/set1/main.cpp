@@ -268,7 +268,7 @@ void c8() {
 }
 
 int main() {
-  std::cout << "Cryptopals" << std::endl;
+  std::cout << "Cryptopals set1" << std::endl;
   // c1();
   // c2();
   // c3();

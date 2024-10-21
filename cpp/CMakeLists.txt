@@ -23,5 +23,6 @@ add_compile_options(-fexceptions)
 
 add_subdirectory(crypt)
 add_subdirectory(set1)
+add_subdirectory(set2)
 
 #*****************************************************************************
