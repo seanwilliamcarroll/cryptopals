@@ -237,9 +237,18 @@ void c7_my_aes() {
   const std::string input_key = "YELLOW SUBMARINE";
   const RawBytes key_raw = from_ascii_string(input_key);
 
-  const RawBytes plaintext_raw = AES_128_decrypt(ciphertext_raw, key_raw);
+  const RawBytes plaintext_raw = AES_128_ECB_decrypt(ciphertext_raw, key_raw);
   std::cout << "Decrypted text:" << std::endl << std::endl;
   to_ascii_string(std::cout, plaintext_raw) << std::endl << std::endl;
+
+  const RawBytes ciphertext_2_raw = AES_128_ECB_encrypt(plaintext_raw, key_raw);
+
+  const RawBytes plaintext_2_raw =
+      AES_128_ECB_decrypt(ciphertext_2_raw, key_raw);
+
+  std::cout << "Decrypted text (after being encrypted again):" << std::endl
+            << std::endl;
+  to_ascii_string(std::cout, plaintext_2_raw) << std::endl << std::endl;
 }
 
 void c7() {

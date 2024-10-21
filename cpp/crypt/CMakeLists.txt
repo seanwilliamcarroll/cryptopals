@@ -6,6 +6,7 @@ add_library(crypt-lib STATIC
   src/raw_bytes.cpp
   src/freq_map.cpp
   src/crypt.cpp
+  src/block.cpp
 )
 
 set_target_properties(crypt-lib PROPERTIES OUTPUT_NAME crypt)

@@ -34,9 +34,3 @@ size_t find_likely_key_length(const RawBytes &input, const size_t lower_bound,
 RawBytes find_likely_key(const RawBytes &input, const size_t key_length);
 
 bool detect_ecb(const RawBytes &input);
-
-RawBytes add_pkcs7_padding(const RawBytes &input,
-                           const size_t block_size_bytes = BLOCK_SIZE_BYTES);
-
-RawBytes remove_pkcs7_padding(const RawBytes &input,
-                              const size_t block_size_bytes);

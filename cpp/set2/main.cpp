@@ -46,10 +46,13 @@ void c9() {
   padding_test(15);
 }
 
+void c10() {}
+
 int main() {
   std::cout << "Cryptopals set2" << std::endl;
 
-  c9();
+  // c9();
+  c10();
 
   return 0;
 }

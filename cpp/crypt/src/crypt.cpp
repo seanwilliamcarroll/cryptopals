@@ -167,28 +167,3 @@ bool detect_ecb(const RawBytes &input) {
   }
   return false;
 }
-
-RawBytes add_pkcs7_padding(const RawBytes &input,
-                           const size_t block_size_bytes) {
-  const size_t length = input.size();
-  const size_t additional_bytes =
-      block_size_bytes - (length % block_size_bytes);
-  uint8_t padding_byte = uint8_t(additional_bytes);
-  if (additional_bytes == block_size_bytes) {
-    padding_byte = 0;
-  }
-  RawBytes output(length + additional_bytes, padding_byte);
-  std::copy(std::begin(input), std::end(input), std::begin(output));
-  return output;
-}
-
-RawBytes remove_pkcs7_padding(const RawBytes &input,
-                              const size_t block_size_bytes) {
-  const size_t length = input.size();
-  const size_t last_byte = size_t(input.back());
-  const size_t bytes_to_remove = last_byte == 0 ? block_size_bytes : last_byte;
-
-  RawBytes output(input);
-  output.resize(length - bytes_to_remove);
-  return output;
-}
