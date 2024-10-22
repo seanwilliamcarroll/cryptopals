@@ -84,3 +84,17 @@ RawBytes add_pkcs7_padding(const RawBytes &input,
 
 RawBytes remove_pkcs7_padding(const RawBytes &input,
                               const size_t block_size_bytes);
+
+RawBytes AES_128_CBC_encrypt(const RawBytes &plaintext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw);
+RawBytes AES_192_CBC_encrypt(const RawBytes &plaintext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw);
+RawBytes AES_256_CBC_encrypt(const RawBytes &plaintext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw);
+
+RawBytes AES_128_CBC_decrypt(const RawBytes &ciphertext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw);
+RawBytes AES_192_CBC_decrypt(const RawBytes &ciphertext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw);
+RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw);

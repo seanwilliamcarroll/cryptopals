@@ -46,7 +46,19 @@ void c9() {
   padding_test(15);
 }
 
-void c10() {}
+void c10() {
+  const std::string base64_input =
+      load_and_strip("/Users/sean/cryptopals/cpp/set2/10.txt");
+  const RawBytes ciphertext_raw = from_base64_string(base64_input);
+  const std::string input_key = "YELLOW SUBMARINE";
+  const RawBytes key_raw = from_ascii_string(input_key);
+  const RawBytes iv_raw(16, 0);
+
+  const RawBytes plaintext_raw =
+      AES_128_CBC_decrypt(ciphertext_raw, key_raw, iv_raw);
+  std::cout << "Decrypted text:" << std::endl << std::endl;
+  to_ascii_string(std::cout, plaintext_raw) << std::endl << std::endl;
+}
 
 int main() {
   std::cout << "Cryptopals set2" << std::endl;

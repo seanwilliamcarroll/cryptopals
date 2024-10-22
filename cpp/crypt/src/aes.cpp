@@ -311,3 +311,100 @@ RawBytes remove_pkcs7_padding(const RawBytes &input,
   output.resize(length - bytes_to_remove);
   return output;
 }
+
+template <typename KeyScheduleType>
+RawBytes AES_CBC_encrypt(const RawBytes &plaintext_raw,
+                         const KeyScheduleType &key_schedule,
+                         const RawBytes &iv_raw) {
+  RawBytes plaintext_padded_raw =
+      add_pkcs7_padding(plaintext_raw, BLOCK_SIZE_BYTES);
+  RawBytes ciphertext_raw(plaintext_padded_raw.size());
+
+  const size_t num_blocks =
+      std::ceil<size_t>(double(plaintext_padded_raw.size()) / BLOCK_SIZE_BYTES);
+  ByteBlock last_ciphertext = from_raw_bytes_to_byte_block(iv_raw);
+  ;
+  for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
+    ByteBlock plaintext =
+        from_raw_bytes_to_byte_block(plaintext_padded_raw, block_index);
+    plaintext = plaintext ^ last_ciphertext;
+    ByteBlock ciphertext;
+    AES_cipher(plaintext, ciphertext, key_schedule);
+
+    last_ciphertext = ciphertext;
+
+    from_byte_block_to_raw_bytes(ciphertext, ciphertext_raw, block_index);
+  }
+  return ciphertext_raw;
+}
+
+RawBytes AES_128_CBC_encrypt(const RawBytes &plaintext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw) {
+  const auto aes_128_key = gen_aes128_key(key_raw);
+  const auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
+  return AES_CBC_encrypt<AES128KeySchedule>(plaintext_raw, aes_128_key_schedule,
+                                            iv_raw);
+}
+
+RawBytes AES_192_CBC_encrypt(const RawBytes &plaintext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw) {
+  const auto aes_192_key = gen_aes192_key(key_raw);
+  const auto aes_192_key_schedule = gen_key_schedule(aes_192_key);
+  return AES_CBC_encrypt<AES192KeySchedule>(plaintext_raw, aes_192_key_schedule,
+                                            iv_raw);
+}
+
+RawBytes AES_256_CBC_encrypt(const RawBytes &plaintext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw) {
+  const auto aes_256_key = gen_aes256_key(key_raw);
+  const auto aes_256_key_schedule = gen_key_schedule(aes_256_key);
+  return AES_CBC_encrypt<AES256KeySchedule>(plaintext_raw, aes_256_key_schedule,
+                                            iv_raw);
+}
+
+template <typename KeyScheduleType>
+RawBytes AES_CBC_decrypt(const RawBytes &ciphertext_raw,
+                         const KeyScheduleType &key_schedule,
+                         const RawBytes &iv_raw) {
+  RawBytes plaintext_raw(ciphertext_raw.size());
+
+  const size_t num_blocks =
+      std::ceil<size_t>(double(ciphertext_raw.size()) / BLOCK_SIZE_BYTES);
+  ByteBlock last_ciphertext = from_raw_bytes_to_byte_block(iv_raw);
+  for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
+    ByteBlock ciphertext =
+        from_raw_bytes_to_byte_block(ciphertext_raw, block_index);
+    ByteBlock plaintext;
+    AES_inv_cipher(ciphertext, plaintext, key_schedule);
+
+    plaintext = plaintext ^ last_ciphertext;
+    last_ciphertext = ciphertext;
+
+    from_byte_block_to_raw_bytes(plaintext, plaintext_raw, block_index);
+  }
+  return remove_pkcs7_padding(plaintext_raw, BLOCK_SIZE_BYTES);
+}
+
+RawBytes AES_128_CBC_decrypt(const RawBytes &ciphertext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw) {
+  const auto aes_128_key = gen_aes128_key(key_raw);
+  const auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
+  return AES_CBC_decrypt<AES128KeySchedule>(ciphertext_raw,
+                                            aes_128_key_schedule, iv_raw);
+}
+
+RawBytes AES_192_CBC_decrypt(const RawBytes &ciphertext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw) {
+  const auto aes_192_key = gen_aes192_key(key_raw);
+  const auto aes_192_key_schedule = gen_key_schedule(aes_192_key);
+  return AES_CBC_decrypt<AES192KeySchedule>(ciphertext_raw,
+                                            aes_192_key_schedule, iv_raw);
+}
+
+RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
+                             const RawBytes &key_raw, const RawBytes &iv_raw) {
+  const auto aes_256_key = gen_aes256_key(key_raw);
+  const auto aes_256_key_schedule = gen_key_schedule(aes_256_key);
+  return AES_CBC_decrypt<AES256KeySchedule>(ciphertext_raw,
+                                            aes_256_key_schedule, iv_raw);
+}
