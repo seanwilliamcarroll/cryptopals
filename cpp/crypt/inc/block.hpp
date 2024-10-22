@@ -12,7 +12,13 @@ constexpr inline size_t BLOCK_SIZE_BYTES = WORD_SIZE_BYTES * BLOCK_SIZE_WORDS;
 
 using ByteColumn = std::array<uint8_t, WORD_SIZE_BYTES>;
 using Word = ByteColumn;
-using ByteBlock = std::array<ByteColumn, BLOCK_SIZE_WORDS>;
+
+template <size_t ByteColumnArrayLength>
+using ByteColumnArray = std::array<ByteColumn, ByteColumnArrayLength>;
+template <size_t WordArrayLength>
+using WordArray = ByteColumnArray<WordArrayLength>;
+
+using ByteBlock = ByteColumnArray<BLOCK_SIZE_WORDS>;
 
 ByteColumn get_column(const ByteBlock &, size_t col_index);
 void set_column(ByteBlock &, const ByteColumn &, size_t col_index);
@@ -46,6 +52,41 @@ ByteBlock from_raw_bytes_to_byte_block(const RawBytes &,
 void from_byte_block_to_raw_bytes(const ByteBlock &input, RawBytes &output,
                                   size_t block_number = 0);
 RawBytes from_byte_block_to_raw_bytes(const ByteBlock &);
+
+template <typename ContainerType>
+void to_word(const ContainerType &input, Word &output,
+             const size_t offset_bytes = 0) {
+  for (size_t byte_index = 0; byte_index < WORD_SIZE_BYTES; ++byte_index) {
+    output[byte_index] = input[offset_bytes + byte_index];
+  }
+}
+
+template <typename ContainerType, size_t WordArrayLength>
+void to_word_array(const ContainerType &input,
+                   WordArray<WordArrayLength> &output,
+                   const size_t offset_bytes = 0) {
+  for (size_t word_index = 0; word_index < WordArrayLength; ++word_index) {
+    Word &word = output[word_index];
+    to_word(input, word, word_index * WORD_SIZE_BYTES);
+  }
+}
+
+template <typename ContainerType>
+void from_word(const Word &input, ContainerType &output,
+               const size_t offset_bytes = 0) {
+  for (size_t byte_index = 0; byte_index < WORD_SIZE_BYTES; ++byte_index) {
+    output[offset_bytes + byte_index] = input[byte_index];
+  }
+}
+
+template <typename ContainerType, size_t WordArrayLength>
+void from_word_array(const WordArray<WordArrayLength> &input,
+                     ContainerType &output, const size_t offset_bytes = 0) {
+  for (size_t word_index = 0; word_index < WordArrayLength; ++word_index) {
+    const Word &word = input[word_index];
+    from_word(word, output, word_index * WORD_SIZE_BYTES);
+  }
+}
 
 void rot_word(Word &);
 void sub_word(Word &);

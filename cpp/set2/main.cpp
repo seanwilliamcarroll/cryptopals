@@ -60,11 +60,24 @@ void c10() {
   to_ascii_string(std::cout, plaintext_raw) << std::endl << std::endl;
 }
 
+void c11_gen_rand_keys() {
+  for (size_t index = 0; index < 10; ++index) {
+    const AES128Key key = gen_rand_aes128_key();
+    const RawBytes key_raw = from_aes_128_key_to_raw_bytes(key);
+
+    std::cout << "Random key as hex string:" << std::endl;
+    to_hex_string(std::cout, key_raw) << std::endl;
+  }
+}
+
+void c11() { c11_gen_rand_keys(); }
+
 int main() {
   std::cout << "Cryptopals set2" << std::endl;
 
   // c9();
-  c10();
+  // c10();
+  c11();
 
   return 0;
 }

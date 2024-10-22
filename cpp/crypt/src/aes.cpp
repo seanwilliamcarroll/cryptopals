@@ -424,3 +424,43 @@ AES128Key gen_rand_aes128_key() { return gen_rand_key<AES128Key>(); }
 AES192Key gen_rand_aes192_key() { return gen_rand_key<AES192Key>(); }
 
 AES256Key gen_rand_aes256_key() { return gen_rand_key<AES256Key>(); }
+
+template <typename KeyType>
+KeyType from_raw_bytes_to_aes_key(const RawBytes &input) {
+  constexpr size_t NUM_WORDS = std::tuple_size<KeyType>{};
+  KeyType output;
+  to_word_array<RawBytes, NUM_WORDS>(input, output, 0);
+  return output;
+}
+
+template <typename KeyType>
+RawBytes from_aes_key_to_raw_bytes(const KeyType &input) {
+  constexpr size_t NUM_WORDS = std::tuple_size<KeyType>{};
+  RawBytes output(NUM_WORDS * WORD_SIZE_BYTES, 0);
+  from_word_array<RawBytes, NUM_WORDS>(input, output, 0);
+  return output;
+}
+
+AES128Key from_raw_bytes_to_aes_128_key(const RawBytes &input) {
+  return from_raw_bytes_to_aes_key<AES128Key>(input);
+}
+
+RawBytes from_aes_128_key_to_raw_bytes(const AES128Key &input) {
+  return from_aes_key_to_raw_bytes<AES128Key>(input);
+}
+
+AES192Key from_raw_bytes_to_aes_192_key(const RawBytes &input) {
+  return from_raw_bytes_to_aes_key<AES192Key>(input);
+}
+
+RawBytes from_aes_192_key_to_raw_bytes(const AES192Key &input) {
+  return from_aes_key_to_raw_bytes<AES192Key>(input);
+}
+
+AES256Key from_raw_bytes_to_aes_256_key(const RawBytes &input) {
+  return from_raw_bytes_to_aes_key<AES256Key>(input);
+}
+
+RawBytes from_aes_256_key_to_raw_bytes(const AES256Key &input) {
+  return from_aes_key_to_raw_bytes<AES256Key>(input);
+}

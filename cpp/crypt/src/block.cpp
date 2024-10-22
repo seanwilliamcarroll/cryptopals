@@ -255,12 +255,12 @@ ByteBlock to_block(const ContainerType &input, const size_t block_number = 0) {
     for (size_t row_index = 0; row_index < BLOCK_SIZE_WORDS; ++row_index) {
       const size_t flat_index = (column_index * WORD_SIZE_BYTES) + row_index;
 
-      // TODO padding
-      if (input.size() <= flat_offset + flat_index) {
-        column[row_index] = flat_offset + flat_index - input.size();
-      } else {
-        column[row_index] = input[flat_offset + flat_index];
-      }
+      // // TODO padding
+      // if (input.size() <= flat_offset + flat_index) {
+      //   column[row_index] = flat_offset + flat_index - input.size();
+      // } else {
+      column[row_index] = input[flat_offset + flat_index];
+      // }
     }
     set_column(output, column, column_index);
   }
@@ -271,16 +271,12 @@ template <typename ContainerType>
 void from_block(const ByteBlock &input, ContainerType &output,
                 const size_t block_number = 0) {
   const size_t flat_offset = block_number * BLOCK_SIZE_BYTES;
-  size_t flat_end = (block_number + 1) * BLOCK_SIZE_BYTES;
 
   for (size_t column_index = 0; column_index < WORD_SIZE_BYTES;
        ++column_index) {
     ByteColumn column = get_column(input, column_index);
     for (size_t row_index = 0; row_index < BLOCK_SIZE_WORDS; ++row_index) {
       const size_t flat_index = (column_index * WORD_SIZE_BYTES) + row_index;
-      if (flat_offset + flat_index >= flat_end) {
-        return;
-      }
       output[flat_offset + flat_index] = column[row_index];
     }
   }

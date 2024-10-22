@@ -19,14 +19,11 @@ using AES128Key = std::array<ByteColumn, AES_128_KEY_LENGTH_WORDS>;
 using AES192Key = std::array<ByteColumn, AES_192_KEY_LENGTH_WORDS>;
 using AES256Key = std::array<ByteColumn, AES_256_KEY_LENGTH_WORDS>;
 
-using AES128KeySchedule =
-    std::array<ByteColumn, BLOCK_SIZE_WORDS *(AES_128_NUM_ROUNDS + 1)>;
+using AES128KeySchedule = WordArray<BLOCK_SIZE_WORDS *(AES_128_NUM_ROUNDS + 1)>;
 
-using AES192KeySchedule =
-    std::array<ByteColumn, BLOCK_SIZE_WORDS *(AES_192_NUM_ROUNDS + 1)>;
+using AES192KeySchedule = WordArray<BLOCK_SIZE_WORDS *(AES_192_NUM_ROUNDS + 1)>;
 
-using AES256KeySchedule =
-    std::array<ByteColumn, BLOCK_SIZE_WORDS *(AES_256_NUM_ROUNDS + 1)>;
+using AES256KeySchedule = WordArray<BLOCK_SIZE_WORDS *(AES_256_NUM_ROUNDS + 1)>;
 
 template <typename CastType, typename KeyScheduleType>
 std::ostream &pretty_print(std::ostream &out, const KeyScheduleType &input) {
@@ -102,3 +99,12 @@ RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
 AES128Key gen_rand_aes128_key();
 AES192Key gen_rand_aes192_key();
 AES256Key gen_rand_aes256_key();
+
+AES128Key from_raw_bytes_to_aes_128_key(const RawBytes &);
+RawBytes from_aes_128_key_to_raw_bytes(const AES128Key &);
+
+AES192Key from_raw_bytes_to_aes_192_key(const RawBytes &);
+RawBytes from_aes_192_key_to_raw_bytes(const AES192Key &);
+
+AES256Key from_raw_bytes_to_aes_256_key(const RawBytes &);
+RawBytes from_aes_256_key_to_raw_bytes(const AES256Key &);
