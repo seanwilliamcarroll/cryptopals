@@ -1,4 +1,5 @@
 #include <aes.hpp>
+#include <rand.hpp>
 
 #include <algorithm>
 #include <array>
@@ -408,3 +409,18 @@ RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
   return AES_CBC_decrypt<AES256KeySchedule>(ciphertext_raw,
                                             aes_256_key_schedule, iv_raw);
 }
+
+template <typename KeyType> KeyType gen_rand_key() {
+  static c_RandomByteGenerator generator;
+  KeyType key;
+  for (auto &word : key) {
+    word = generator.generate_random_word();
+  }
+  return key;
+}
+
+AES128Key gen_rand_aes128_key() { return gen_rand_key<AES128Key>(); }
+
+AES192Key gen_rand_aes192_key() { return gen_rand_key<AES192Key>(); }
+
+AES256Key gen_rand_aes256_key() { return gen_rand_key<AES256Key>(); }

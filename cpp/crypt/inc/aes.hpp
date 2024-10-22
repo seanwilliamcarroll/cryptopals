@@ -98,3 +98,7 @@ RawBytes AES_192_CBC_decrypt(const RawBytes &ciphertext_raw,
                              const RawBytes &key_raw, const RawBytes &iv_raw);
 RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
                              const RawBytes &key_raw, const RawBytes &iv_raw);
+
+AES128Key gen_rand_aes128_key();
+AES192Key gen_rand_aes192_key();
+AES256Key gen_rand_aes256_key();
