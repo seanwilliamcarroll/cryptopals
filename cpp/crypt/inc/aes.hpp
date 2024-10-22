@@ -108,3 +108,13 @@ RawBytes from_aes_192_key_to_raw_bytes(const AES192Key &);
 
 AES256Key from_raw_bytes_to_aes_256_key(const RawBytes &);
 RawBytes from_aes_256_key_to_raw_bytes(const AES256Key &);
+
+RawBytes AES_128_rand_ECB_encrypt(const RawBytes &plaintext_raw);
+RawBytes AES_192_rand_ECB_encrypt(const RawBytes &plaintext_raw);
+RawBytes AES_256_rand_ECB_encrypt(const RawBytes &plaintext_raw);
+
+RawBytes AES_128_rand_CBC_encrypt(const RawBytes &plaintext_raw);
+RawBytes AES_192_rand_CBC_encrypt(const RawBytes &plaintext_raw);
+RawBytes AES_256_rand_CBC_encrypt(const RawBytes &plaintext_raw);
+
+RawBytes AES_128_rand_encrypt(const RawBytes &plaintext_raw);

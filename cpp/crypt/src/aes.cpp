@@ -316,14 +316,14 @@ RawBytes remove_pkcs7_padding(const RawBytes &input,
 template <typename KeyScheduleType>
 RawBytes AES_CBC_encrypt(const RawBytes &plaintext_raw,
                          const KeyScheduleType &key_schedule,
-                         const RawBytes &iv_raw) {
+                         const ByteBlock &iv) {
   RawBytes plaintext_padded_raw =
       add_pkcs7_padding(plaintext_raw, BLOCK_SIZE_BYTES);
   RawBytes ciphertext_raw(plaintext_padded_raw.size());
 
   const size_t num_blocks =
       std::ceil<size_t>(double(plaintext_padded_raw.size()) / BLOCK_SIZE_BYTES);
-  ByteBlock last_ciphertext = from_raw_bytes_to_byte_block(iv_raw);
+  ByteBlock last_ciphertext = iv;
   ;
   for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
     ByteBlock plaintext =
@@ -337,6 +337,14 @@ RawBytes AES_CBC_encrypt(const RawBytes &plaintext_raw,
     from_byte_block_to_raw_bytes(ciphertext, ciphertext_raw, block_index);
   }
   return ciphertext_raw;
+}
+
+template <typename KeyScheduleType>
+RawBytes AES_CBC_encrypt(const RawBytes &plaintext_raw,
+                         const KeyScheduleType &key_schedule,
+                         const RawBytes &iv_raw) {
+  const ByteBlock iv = from_raw_bytes_to_byte_block(iv_raw);
+  return AES_CBC_encrypt<KeyScheduleType>(plaintext_raw, key_schedule, iv);
 }
 
 RawBytes AES_128_CBC_encrypt(const RawBytes &plaintext_raw,
@@ -419,6 +427,15 @@ template <typename KeyType> KeyType gen_rand_key() {
   return key;
 }
 
+ByteBlock gen_rand_block() {
+  static c_RandomByteGenerator generator;
+  ByteBlock output;
+  for (auto &word : output) {
+    word = generator.generate_random_word();
+  }
+  return output;
+}
+
 AES128Key gen_rand_aes128_key() { return gen_rand_key<AES128Key>(); }
 
 AES192Key gen_rand_aes192_key() { return gen_rand_key<AES192Key>(); }
@@ -463,4 +480,71 @@ AES256Key from_raw_bytes_to_aes_256_key(const RawBytes &input) {
 
 RawBytes from_aes_256_key_to_raw_bytes(const AES256Key &input) {
   return from_aes_key_to_raw_bytes<AES256Key>(input);
+}
+
+template <typename KeyType, typename KeyScheduleType>
+RawBytes AES_rand_ECB_encrypt(const RawBytes &plaintext_raw) {
+  const KeyType aes_rand_key = gen_rand_key<KeyType>();
+  const KeyScheduleType aes_rand_key_schedule = gen_key_schedule(aes_rand_key);
+  return AES_ECB_encrypt<KeyScheduleType>(plaintext_raw, aes_rand_key_schedule);
+}
+
+template <typename KeyType, typename KeyScheduleType>
+RawBytes AES_rand_CBC_encrypt(const RawBytes &plaintext_raw) {
+  const KeyType aes_rand_key = gen_rand_key<KeyType>();
+  const ByteBlock rand_iv = gen_rand_block();
+  const KeyScheduleType aes_rand_key_schedule = gen_key_schedule(aes_rand_key);
+  return AES_CBC_encrypt<KeyScheduleType>(plaintext_raw, aes_rand_key_schedule,
+                                          rand_iv);
+}
+
+RawBytes AES_128_rand_ECB_encrypt(const RawBytes &plaintext_raw) {
+  return AES_rand_ECB_encrypt<AES128Key, AES128KeySchedule>(plaintext_raw);
+}
+
+RawBytes AES_192_rand_ECB_encrypt(const RawBytes &plaintext_raw) {
+  return AES_rand_ECB_encrypt<AES192Key, AES192KeySchedule>(plaintext_raw);
+}
+
+RawBytes AES_256_rand_ECB_encrypt(const RawBytes &plaintext_raw) {
+  return AES_rand_ECB_encrypt<AES256Key, AES256KeySchedule>(plaintext_raw);
+}
+
+RawBytes AES_128_rand_CBC_encrypt(const RawBytes &plaintext_raw) {
+  return AES_rand_CBC_encrypt<AES128Key, AES128KeySchedule>(plaintext_raw);
+}
+
+RawBytes AES_192_rand_CBC_encrypt(const RawBytes &plaintext_raw) {
+  return AES_rand_CBC_encrypt<AES192Key, AES192KeySchedule>(plaintext_raw);
+}
+
+RawBytes AES_256_rand_CBC_encrypt(const RawBytes &plaintext_raw) {
+  return AES_rand_CBC_encrypt<AES256Key, AES256KeySchedule>(plaintext_raw);
+}
+
+RawBytes prepend_bytes(const RawBytes &original, const RawBytes &prefix) {
+  RawBytes output(prefix.size() + original.size(), 0);
+
+  std::copy(std::begin(prefix), std::end(prefix), std::begin(output));
+  std::copy(std::begin(original), std::end(original),
+            std::begin(output) + prefix.size());
+
+  return output;
+}
+
+RawBytes AES_128_rand_encrypt(const RawBytes &plaintext_raw) {
+  static c_RandomByteGenerator generator;
+
+  const size_t num_random_bytes = generator.generate_in_range(5, 10);
+  const RawBytes prefix = generator.generate_n_random_bytes(num_random_bytes);
+
+  const RawBytes new_plaintext_raw = prepend_bytes(plaintext_raw, prefix);
+
+  if (generator.generate_random_byte() & 0x1) {
+    std::cout << "Encrypted with CBC" << std::endl;
+    return AES_128_rand_CBC_encrypt(new_plaintext_raw);
+  } else {
+    std::cout << "Encrypted with ECB" << std::endl;
+    return AES_128_rand_ECB_encrypt(new_plaintext_raw);
+  }
 }

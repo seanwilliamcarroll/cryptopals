@@ -160,6 +160,7 @@ bool detect_ecb(const RawBytes &input) {
     const auto block_end =
         input.begin() + ((block_index + 1) * BLOCK_SIZE_BYTES);
     const RawBytes block(block_begin, block_end);
+
     if (already_seen.count(block) == 1) {
       return true;
     }

@@ -70,7 +70,25 @@ void c11_gen_rand_keys() {
   }
 }
 
-void c11() { c11_gen_rand_keys(); }
+void c11() {
+  // c11_gen_rand_keys();
+
+  const RawBytes plaintext_raw(256, 'X');
+
+  std::cout << "Plaintext:" << std::endl << std::endl;
+  to_ascii_string(std::cout, plaintext_raw) << std::endl << std::endl;
+  for (size_t index = 0; index < 10; ++index) {
+    std::cout << "--------------------------------" << std::endl;
+    const RawBytes new_ciphertext_raw = AES_128_rand_encrypt(plaintext_raw);
+
+    if (detect_ecb(new_ciphertext_raw)) {
+      std::cout << "Detected ECB" << std::endl;
+    } else {
+      std::cout << "Detected CBC" << std::endl;
+    }
+    std::cout << "--------------------------------" << std::endl << std::endl;
+  }
+}
 
 int main() {
   std::cout << "Cryptopals set2" << std::endl;
