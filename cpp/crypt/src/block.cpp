@@ -249,13 +249,15 @@ void set_row(ByteBlock &block, const Word &row, const size_t row_index) {
 ByteBlock from_raw_bytes_to_byte_block(const RawBytes &input,
                                        const size_t block_number) {
   ByteBlock output;
-  to_word_array<RawBytes, BLOCK_SIZE_WORDS>(input, output, block_number * BLOCK_SIZE_BYTES);
+  to_word_array<RawBytes, BLOCK_SIZE_WORDS>(input, output,
+                                            block_number * BLOCK_SIZE_BYTES);
   return output;
 }
 
 void from_byte_block_to_raw_bytes(const ByteBlock &input, RawBytes &output,
                                   const size_t block_number) {
-  from_word_array<RawBytes, BLOCK_SIZE_WORDS>(input, output, block_number * BLOCK_SIZE_BYTES);
+  from_word_array<RawBytes, BLOCK_SIZE_WORDS>(input, output,
+                                              block_number * BLOCK_SIZE_BYTES);
 }
 
 RawBytes from_byte_block_to_raw_bytes(const ByteBlock &input) {
