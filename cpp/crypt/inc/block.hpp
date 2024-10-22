@@ -49,7 +49,7 @@ std::ostream &pretty_print(std::ostream &out, const ByteBlock &input) {
 
 ByteBlock from_raw_bytes_to_byte_block(const RawBytes &,
                                        size_t block_number = 0);
-void from_byte_block_to_raw_bytes(const ByteBlock &input, RawBytes &output,
+void from_byte_block_to_raw_bytes(const ByteBlock &, RawBytes &,
                                   size_t block_number = 0);
 RawBytes from_byte_block_to_raw_bytes(const ByteBlock &);
 
@@ -67,7 +67,7 @@ void to_word_array(const ContainerType &input,
                    const size_t offset_bytes = 0) {
   for (size_t word_index = 0; word_index < WordArrayLength; ++word_index) {
     Word &word = output[word_index];
-    to_word(input, word, word_index * WORD_SIZE_BYTES);
+    to_word(input, word, offset_bytes + (word_index * WORD_SIZE_BYTES));
   }
 }
 
@@ -84,7 +84,7 @@ void from_word_array(const WordArray<WordArrayLength> &input,
                      ContainerType &output, const size_t offset_bytes = 0) {
   for (size_t word_index = 0; word_index < WordArrayLength; ++word_index) {
     const Word &word = input[word_index];
-    from_word(word, output, word_index * WORD_SIZE_BYTES);
+    from_word(word, output, offset_bytes + (word_index * WORD_SIZE_BYTES));
   }
 }
 

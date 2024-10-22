@@ -244,65 +244,24 @@ void set_row(ByteBlock &block, const Word &row, const size_t row_index) {
   }
 }
 
-template <typename ContainerType>
-ByteBlock to_block(const ContainerType &input, const size_t block_number = 0) {
-  // input is assumed to be a flat stream of datatype
-  ByteBlock output;
-  const size_t flat_offset = block_number * BLOCK_SIZE_BYTES;
-  for (size_t column_index = 0; column_index < WORD_SIZE_BYTES;
-       ++column_index) {
-    ByteColumn column;
-    for (size_t row_index = 0; row_index < BLOCK_SIZE_WORDS; ++row_index) {
-      const size_t flat_index = (column_index * WORD_SIZE_BYTES) + row_index;
-
-      // // TODO padding
-      // if (input.size() <= flat_offset + flat_index) {
-      //   column[row_index] = flat_offset + flat_index - input.size();
-      // } else {
-      column[row_index] = input[flat_offset + flat_index];
-      // }
-    }
-    set_column(output, column, column_index);
-  }
-  return output;
-}
-
-template <typename ContainerType>
-void from_block(const ByteBlock &input, ContainerType &output,
-                const size_t block_number = 0) {
-  const size_t flat_offset = block_number * BLOCK_SIZE_BYTES;
-
-  for (size_t column_index = 0; column_index < WORD_SIZE_BYTES;
-       ++column_index) {
-    ByteColumn column = get_column(input, column_index);
-    for (size_t row_index = 0; row_index < BLOCK_SIZE_WORDS; ++row_index) {
-      const size_t flat_index = (column_index * WORD_SIZE_BYTES) + row_index;
-      output[flat_offset + flat_index] = column[row_index];
-    }
-  }
-}
-
-template <typename ContainerType>
-ContainerType from_block(const ByteBlock &input) {
-  ContainerType output(BLOCK_SIZE_BYTES, uint8_t());
-  from_block(input, output, 0);
-  return output;
-}
-
 // External API functions
 
 ByteBlock from_raw_bytes_to_byte_block(const RawBytes &input,
                                        const size_t block_number) {
-  return to_block<RawBytes>(input, block_number);
+  ByteBlock output;
+  to_word_array<RawBytes, BLOCK_SIZE_WORDS>(input, output, block_number * BLOCK_SIZE_BYTES);
+  return output;
 }
 
 void from_byte_block_to_raw_bytes(const ByteBlock &input, RawBytes &output,
                                   const size_t block_number) {
-  from_block<RawBytes>(input, output, block_number);
+  from_word_array<RawBytes, BLOCK_SIZE_WORDS>(input, output, block_number * BLOCK_SIZE_BYTES);
 }
 
 RawBytes from_byte_block_to_raw_bytes(const ByteBlock &input) {
-  return from_block<RawBytes>(input);
+  RawBytes output(BLOCK_SIZE_BYTES, 0);
+  from_byte_block_to_raw_bytes(input, output, 0);
+  return output;
 }
 
 void transpose(ByteBlock &input) {
