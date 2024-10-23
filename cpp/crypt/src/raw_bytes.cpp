@@ -215,3 +215,13 @@ RawBytes from_base64_string(const std::string &input) {
   }
   return output;
 }
+
+RawBytes prepend_bytes(const RawBytes &original, const RawBytes &prefix) {
+  RawBytes output(prefix.size() + original.size(), 0);
+
+  std::copy(std::begin(prefix), std::end(prefix), std::begin(output));
+  std::copy(std::begin(original), std::end(original),
+            std::begin(output) + prefix.size());
+
+  return output;
+}

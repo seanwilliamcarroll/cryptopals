@@ -223,11 +223,21 @@ RawBytes AES_ECB_encrypt(const RawBytes &plaintext_raw,
 }
 
 RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
+                             const AES128KeySchedule &key_schedule) {
+  return AES_ECB_encrypt<AES128KeySchedule>(plaintext_raw, key_schedule);
+}
+
+RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
+                             const AES128Key &key) {
+  const auto aes_128_key_schedule = gen_key_schedule(key);
+  return AES_128_ECB_encrypt(plaintext_raw, aes_128_key_schedule);
+}
+
+RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
                              const RawBytes &key_raw) {
   const auto aes_128_key = gen_aes128_key(key_raw);
   const auto aes_128_key_schedule = gen_key_schedule(aes_128_key);
-  return AES_ECB_encrypt<AES128KeySchedule>(plaintext_raw,
-                                            aes_128_key_schedule);
+  return AES_128_ECB_encrypt(plaintext_raw, aes_128_key_schedule);
 }
 
 RawBytes AES_192_ECB_encrypt(const RawBytes &plaintext_raw,
@@ -520,16 +530,6 @@ RawBytes AES_192_rand_CBC_encrypt(const RawBytes &plaintext_raw) {
 
 RawBytes AES_256_rand_CBC_encrypt(const RawBytes &plaintext_raw) {
   return AES_rand_CBC_encrypt<AES256Key, AES256KeySchedule>(plaintext_raw);
-}
-
-RawBytes prepend_bytes(const RawBytes &original, const RawBytes &prefix) {
-  RawBytes output(prefix.size() + original.size(), 0);
-
-  std::copy(std::begin(prefix), std::end(prefix), std::begin(output));
-  std::copy(std::begin(original), std::end(original),
-            std::begin(output) + prefix.size());
-
-  return output;
 }
 
 RawBytes AES_128_rand_encrypt(const RawBytes &plaintext_raw) {

@@ -56,7 +56,12 @@ void AES_256_cipher(const ByteBlock &input, ByteBlock &output,
                     const AES256KeySchedule &key_schedule);
 
 RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
+                             const AES128KeySchedule &key_schedule);
+RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
+                             const AES128Key &key);
+RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
                              const RawBytes &key_raw);
+
 RawBytes AES_192_ECB_encrypt(const RawBytes &plaintext_raw,
                              const RawBytes &key_raw);
 RawBytes AES_256_ECB_encrypt(const RawBytes &plaintext_raw,
@@ -118,3 +123,29 @@ RawBytes AES_192_rand_CBC_encrypt(const RawBytes &plaintext_raw);
 RawBytes AES_256_rand_CBC_encrypt(const RawBytes &plaintext_raw);
 
 RawBytes AES_128_rand_encrypt(const RawBytes &plaintext_raw);
+
+struct c_SecretKeyEncrypter {
+  // TODO: Template for different key sizes?
+
+  c_SecretKeyEncrypter(const AES128Key &secret_key)
+      : m_secret_key(secret_key)
+      , m_secret_key_schedule(gen_key_schedule(m_secret_key)) {}
+
+  c_SecretKeyEncrypter(const RawBytes &secret_key_raw)
+      : c_SecretKeyEncrypter(gen_aes128_key(secret_key_raw)) {}
+
+  c_SecretKeyEncrypter()
+      : c_SecretKeyEncrypter(gen_rand_aes128_key()) {}
+
+  RawBytes encrypt(const RawBytes &plaintext_raw) {
+    return AES_128_ECB_encrypt(plaintext_raw, m_secret_key_schedule);
+  }
+
+  RawBytes encrypt(const RawBytes &plaintext_raw, const RawBytes &prefix) {
+    const RawBytes full_plaintext_raw = prepend_bytes(plaintext_raw, prefix);
+    return encrypt(full_plaintext_raw);
+  }
+
+  const AES128Key m_secret_key;
+  const AES128KeySchedule m_secret_key_schedule;
+};

@@ -30,3 +30,5 @@ RawBytes from_ascii_string(const std::string &input);
 uint8_t from_base64_char(uint8_t input);
 
 RawBytes from_base64_string(const std::string &input);
+
+RawBytes prepend_bytes(const RawBytes &original, const RawBytes &prefix);
