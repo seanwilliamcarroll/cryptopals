@@ -137,6 +137,12 @@ struct c_SecretKeyEncrypter {
   c_SecretKeyEncrypter()
       : c_SecretKeyEncrypter(gen_rand_aes128_key()) {}
 
+  ByteBlock encrypt(const ByteBlock &plaintext) {
+    ByteBlock output;
+    AES_128_cipher(plaintext, output, m_secret_key_schedule);
+    return output;
+  }
+
   RawBytes encrypt(const RawBytes &plaintext_raw) {
     return AES_128_ECB_encrypt(plaintext_raw, m_secret_key_schedule);
   }

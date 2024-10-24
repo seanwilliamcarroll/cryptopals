@@ -166,19 +166,29 @@ void c12() {
 
   RawBytes decrypted_raw(target_plaintext_length_bytes, 0);
 
+  std::vector<RawBytes> ciphertexts_raw;
+  ciphertexts_raw.reserve(block_size_bytes);
+  for (size_t prefix_length_bytes = 0; prefix_length_bytes < block_size_bytes;
+       ++prefix_length_bytes) {
+    RawBytes test_prefix_raw = RawBytes(prefix_length_bytes, 'X');
+    ciphertexts_raw.push_back(
+        do_encrypt_prefix(target_plaintext_raw, test_prefix_raw));
+  }
+
   for (size_t byte_index = 0; byte_index < target_plaintext_length_bytes;
        ++byte_index) {
     const size_t prefix_length =
         (int(block_size_bytes) - 1 - int(byte_index)) % block_size_bytes;
     const size_t block_number = byte_index / block_size_bytes;
 
-    RawBytes test_prefix_raw = RawBytes(prefix_length, 'X');
-    const RawBytes ciphertext_raw =
-        do_encrypt_prefix(target_plaintext_raw, test_prefix_raw);
+    // const RawBytes ciphertext_raw =
+    //   do_encrypt_prefix(target_plaintext_raw, test_prefix_raw);
+    const RawBytes ciphertext_raw = ciphertexts_raw[prefix_length];
 
     const ByteBlock block_of_interest =
         from_raw_bytes_to_byte_block(ciphertext_raw, block_number);
 
+    RawBytes test_prefix_raw = RawBytes(prefix_length, 'X');
     test_prefix_raw =
         prepend_bytes(RawBytes(std::begin(decrypted_raw),
                                std::begin(decrypted_raw) + byte_index),
@@ -187,10 +197,13 @@ void c12() {
     for (size_t test_byte = 0; test_byte < 256; ++test_byte) {
       // Select which bytes to encrypt
       test_prefix_raw.back() = test_byte;
-      const RawBytes test_ciphertext_raw =
-          do_encrypt_prefix(target_plaintext_raw, test_prefix_raw);
-      const ByteBlock test_block =
-          from_raw_bytes_to_byte_block(test_ciphertext_raw, block_number);
+      ByteBlock test_plaintext =
+          from_raw_bytes_to_byte_block(test_prefix_raw, block_number);
+      ByteBlock test_block = encrypter.encrypt(test_plaintext);
+      // const RawBytes test_ciphertext_raw =
+      //     do_encrypt_prefix(target_plaintext_raw, test_prefix_raw);
+      // const ByteBlock test_block =
+      //     from_raw_bytes_to_byte_block(test_ciphertext_raw, block_number);
       if (block_of_interest == test_block) {
         std::cout << char(test_byte) << std::flush;
         decrypted_raw[byte_index] = test_byte;
