@@ -225,3 +225,19 @@ RawBytes prepend_bytes(const RawBytes &original, const RawBytes &prefix) {
 
   return output;
 }
+
+RawBytes operator^(const RawBytes &input_1, const RawBytes &input_2) {
+  RawBytes output(input_1);
+  for (size_t index = 0; index < output.size(); ++index) {
+    output[index] ^= input_2[index];
+  }
+  return output;
+}
+
+RawBytes operator^(const RawBytes &input, uint8_t key) {
+  RawBytes output(input);
+  for (auto &element : output) {
+    element ^= key;
+  }
+  return output;
+}

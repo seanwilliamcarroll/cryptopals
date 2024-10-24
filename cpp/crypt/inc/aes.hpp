@@ -1,6 +1,7 @@
 #pragma once
 
 #include <block.hpp>
+#include <rand.hpp>
 #include <raw_bytes.hpp>
 
 #include <array>
@@ -15,9 +16,9 @@ constexpr inline size_t AES_128_NUM_ROUNDS = 10;
 constexpr inline size_t AES_192_NUM_ROUNDS = 12;
 constexpr inline size_t AES_256_NUM_ROUNDS = 14;
 
-using AES128Key = std::array<ByteColumn, AES_128_KEY_LENGTH_WORDS>;
-using AES192Key = std::array<ByteColumn, AES_192_KEY_LENGTH_WORDS>;
-using AES256Key = std::array<ByteColumn, AES_256_KEY_LENGTH_WORDS>;
+using AES128Key = WordArray<AES_128_KEY_LENGTH_WORDS>;
+using AES192Key = WordArray<AES_192_KEY_LENGTH_WORDS>;
+using AES256Key = WordArray<AES_256_KEY_LENGTH_WORDS>;
 
 using AES128KeySchedule = WordArray<BLOCK_SIZE_WORDS *(AES_128_NUM_ROUNDS + 1)>;
 
@@ -101,6 +102,15 @@ RawBytes AES_192_CBC_decrypt(const RawBytes &ciphertext_raw,
 RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
                              const RawBytes &key_raw, const RawBytes &iv_raw);
 
+template <typename KeyType> KeyType gen_rand_key() {
+  static c_RandomByteGenerator generator;
+  KeyType key;
+  for (auto &word : key) {
+    word = generator.generate_random_word();
+  }
+  return key;
+}
+
 AES128Key gen_rand_aes128_key();
 AES192Key gen_rand_aes192_key();
 AES256Key gen_rand_aes256_key();
@@ -124,34 +134,47 @@ RawBytes AES_256_rand_CBC_encrypt(const RawBytes &plaintext_raw);
 
 RawBytes AES_128_rand_encrypt(const RawBytes &plaintext_raw);
 
-struct c_SecretKeyEncrypter {
-  // TODO: Template for different key sizes?
+template <typename KeyType, typename KeyScheduleType> struct c_Encrypter {
+  c_Encrypter(const KeyType &key)
+      : m_key(key)
+      , m_key_schedule(gen_key_schedule(m_key)) {}
 
-  c_SecretKeyEncrypter(const AES128Key &secret_key)
-      : m_secret_key(secret_key)
-      , m_secret_key_schedule(gen_key_schedule(m_secret_key)) {}
+  c_Encrypter(const RawBytes &key_raw)
+      : c_Encrypter(gen_aes128_key(key_raw)) {}
 
-  c_SecretKeyEncrypter(const RawBytes &secret_key_raw)
-      : c_SecretKeyEncrypter(gen_aes128_key(secret_key_raw)) {}
-
-  c_SecretKeyEncrypter()
-      : c_SecretKeyEncrypter(gen_rand_aes128_key()) {}
-
-  ByteBlock encrypt(const ByteBlock &plaintext) {
+  ByteBlock encrypt(const ByteBlock &plaintext) const {
     ByteBlock output;
-    AES_128_cipher(plaintext, output, m_secret_key_schedule);
+    AES_128_cipher(plaintext, output, m_key_schedule);
     return output;
   }
 
-  RawBytes encrypt(const RawBytes &plaintext_raw) {
-    return AES_128_ECB_encrypt(plaintext_raw, m_secret_key_schedule);
+  RawBytes encrypt(const RawBytes &plaintext_raw) const {
+    return AES_128_ECB_encrypt(plaintext_raw, m_key_schedule);
   }
 
-  RawBytes encrypt(const RawBytes &plaintext_raw, const RawBytes &prefix) {
+  RawBytes encrypt(const RawBytes &plaintext_raw,
+                   const RawBytes &prefix) const {
     const RawBytes full_plaintext_raw = prepend_bytes(plaintext_raw, prefix);
     return encrypt(full_plaintext_raw);
   }
 
-  const AES128Key m_secret_key;
-  const AES128KeySchedule m_secret_key_schedule;
+  const KeyType m_key;
+  const KeyScheduleType m_key_schedule;
 };
+
+template <typename KeyType, typename KeyScheduleType>
+struct c_SecretKeyEncrypter : public c_Encrypter<KeyType, KeyScheduleType> {
+  c_SecretKeyEncrypter()
+      : c_Encrypter<KeyType, KeyScheduleType>(gen_rand_key<KeyType>()) {}
+};
+
+using c_AES128Encrypter = c_Encrypter<AES128Key, AES128KeySchedule>;
+using c_AES192Encrypter = c_Encrypter<AES192Key, AES192KeySchedule>;
+using c_AES256Encrypter = c_Encrypter<AES256Key, AES256KeySchedule>;
+
+using c_AES128SecretKeyEncrypter =
+    c_SecretKeyEncrypter<AES128Key, AES128KeySchedule>;
+using c_AES192SecretKeyEncrypter =
+    c_SecretKeyEncrypter<AES192Key, AES192KeySchedule>;
+using c_AES256SecretKeyEncrypter =
+    c_SecretKeyEncrypter<AES256Key, AES256KeySchedule>;

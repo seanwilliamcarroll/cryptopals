@@ -18,24 +18,6 @@
 #include <utility>
 #include <vector>
 
-RawBytes do_xor(const RawBytes &input_1, const RawBytes &input_2) {
-  RawBytes output(input_1);
-
-  for (size_t iter = 0; iter < output.size(); ++iter) {
-    output[iter] ^= input_2[iter];
-  }
-  return output;
-}
-
-RawBytes do_xor(const RawBytes &input, uint8_t key) {
-  RawBytes output(input);
-
-  for (size_t iter = 0; iter < output.size(); ++iter) {
-    output[iter] ^= key;
-  }
-  return output;
-}
-
 RawBytes encrypt_repeating_xor(const RawBytes &plain_text,
                                const RawBytes &key) {
   RawBytes output(plain_text);
@@ -55,7 +37,7 @@ std::pair<char, double> find_likely_single_xor(const RawBytes &input) {
   double score = std::numeric_limits<double>::max();
   char winner = 0;
   for (size_t iter = 0; iter < 256; ++iter) {
-    RawBytes xord_output = do_xor(input, char(iter));
+    RawBytes xord_output = input ^ char(iter);
     FreqMap freq_map = gen_frequency(xord_output);
     double test_score = score_freq(freq_map);
     if (test_score < score) {
@@ -167,4 +149,37 @@ bool detect_ecb(const RawBytes &input) {
     already_seen.insert(block);
   }
   return false;
+}
+
+size_t detect_block_size(std::function<RawBytes(RawBytes)> encrypt_func) {
+  size_t block_size = 1;
+  size_t last_length = encrypt_func(RawBytes(block_size, 'X')).size();
+  ++block_size;
+  while (true) {
+    const RawBytes test_raw(block_size, 'X');
+
+    size_t new_length = encrypt_func(test_raw).size();
+    if (new_length > last_length) {
+      return block_size;
+    }
+    ++block_size;
+  }
+}
+
+size_t
+detect_length_bytes(const size_t block_size_bytes,
+                    const RawBytes &target_plaintext_raw,
+                    std::function<RawBytes(RawBytes, RawBytes)> encrypt_func) {
+  size_t initial_length =
+      encrypt_func(target_plaintext_raw, RawBytes(0)).size();
+  for (size_t prefix_length = 1; prefix_length < block_size_bytes;
+       ++prefix_length) {
+    size_t new_length =
+        encrypt_func(target_plaintext_raw, RawBytes(prefix_length, 'X')).size();
+    if (new_length > initial_length) {
+      return initial_length - prefix_length;
+    }
+  }
+  throw std::runtime_error("Could not find target length");
+  return 0;
 }

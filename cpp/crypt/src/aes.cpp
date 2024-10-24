@@ -428,15 +428,6 @@ RawBytes AES_256_CBC_decrypt(const RawBytes &ciphertext_raw,
                                             aes_256_key_schedule, iv_raw);
 }
 
-template <typename KeyType> KeyType gen_rand_key() {
-  static c_RandomByteGenerator generator;
-  KeyType key;
-  for (auto &word : key) {
-    word = generator.generate_random_word();
-  }
-  return key;
-}
-
 ByteBlock gen_rand_block() {
   static c_RandomByteGenerator generator;
   ByteBlock output;

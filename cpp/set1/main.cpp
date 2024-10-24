@@ -33,7 +33,7 @@ void c2() {
   RawBytes output_1 = from_hex_string(input_1);
   RawBytes output_2 = from_hex_string(input_2);
 
-  RawBytes output_xored = do_xor(output_1, output_2);
+  RawBytes output_xored = output_1 ^ output_2;
 
   std::cout << "Input hex string: " << input_1 << std::endl;
   std::cout << "Input hex string: " << input_2 << std::endl;
@@ -50,7 +50,7 @@ void c3() {
   to_ascii_string(std::cout, output) << std::endl;
 
   const auto [winner, score] = find_likely_single_xor(output);
-  RawBytes xord_output = do_xor(output, char(winner));
+  RawBytes xord_output = output ^ char(winner);
   std::cout << "XOR with: " << std::to_string(winner) << " (" << winner << ")"
             << std::endl;
   std::cout << "Output ascii string: ";
@@ -77,7 +77,7 @@ void c4() {
   std::cout << "Input    hex string: " << best_string << std::endl;
   std::cout << "Input  ascii string: ";
   to_ascii_string(std::cout, output) << std::endl;
-  RawBytes xord_output = do_xor(output, char(best_winner));
+  RawBytes xord_output = output ^ char(best_winner);
   std::cout << "XOR with: " << std::to_string(best_winner) << " ("
             << best_winner << ")"
             << " with Score: " << best_score << std::endl;

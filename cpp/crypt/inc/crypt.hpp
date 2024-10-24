@@ -1,6 +1,7 @@
 #pragma once
 
 #include <aes.hpp>
+#include <block.hpp>
 #include <freq_map.hpp>
 #include <raw_bytes.hpp>
 #include <util.hpp>
@@ -10,6 +11,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <span>
@@ -20,17 +22,20 @@
 #include <utility>
 #include <vector>
 
-RawBytes do_xor(const RawBytes &input_1, const RawBytes &input_2);
-
-RawBytes do_xor(const RawBytes &input, uint8_t key);
-
 RawBytes encrypt_repeating_xor(const RawBytes &plain_text, const RawBytes &key);
 
 std::pair<char, double> find_likely_single_xor(const RawBytes &input);
 
-size_t find_likely_key_length(const RawBytes &input, const size_t lower_bound,
-                              const size_t upper_bound);
+size_t find_likely_key_length(const RawBytes &input, size_t lower_bound,
+                              size_t upper_bound);
 
-RawBytes find_likely_key(const RawBytes &input, const size_t key_length);
+RawBytes find_likely_key(const RawBytes &input, size_t key_length);
 
 bool detect_ecb(const RawBytes &input);
+
+size_t detect_block_size(std::function<RawBytes(RawBytes)> encrypt_func);
+
+size_t
+detect_length_bytes(size_t block_size_bytes,
+                    const RawBytes &target_plaintext_raw,
+                    std::function<RawBytes(RawBytes, RawBytes)> encrypt_func);

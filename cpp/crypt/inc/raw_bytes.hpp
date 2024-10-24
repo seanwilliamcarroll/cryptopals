@@ -32,3 +32,7 @@ uint8_t from_base64_char(uint8_t input);
 RawBytes from_base64_string(const std::string &input);
 
 RawBytes prepend_bytes(const RawBytes &original, const RawBytes &prefix);
+
+RawBytes operator^(const RawBytes &input_1, const RawBytes &input_2);
+
+RawBytes operator^(const RawBytes &input, uint8_t key);

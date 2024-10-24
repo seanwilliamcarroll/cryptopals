@@ -326,13 +326,11 @@ void inv_sub_bytes(ByteBlock &input) {
 }
 
 Word operator^(const Word &input_a, const Word &input_b) {
-  // Word do_xor(const Word &input_a, const Word &input_b) {
   return {uint8_t(input_a[0] ^ input_b[0]), uint8_t(input_a[1] ^ input_b[1]),
           uint8_t(input_a[2] ^ input_b[2]), uint8_t(input_a[3] ^ input_b[3])};
 }
 
 ByteBlock operator^(const ByteBlock &input_a, const ByteBlock &input_b) {
-  // ByteBlock do_xor(const ByteBlock &input_a, const ByteBlock &input_b) {
   ByteBlock output;
   for (size_t column_index = 0; column_index < WORD_SIZE_BYTES;
        ++column_index) {
