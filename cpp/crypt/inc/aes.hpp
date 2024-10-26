@@ -41,6 +41,18 @@ std::ostream &pretty_print(std::ostream &out, const KeyScheduleType &input) {
   return out;
 }
 
+template <typename KeyType> KeyType gen_key(const RawBytes &flat_key) {
+  constexpr size_t KEY_SIZE_WORDS = std::tuple_size<KeyType>{};
+  KeyType key;
+  for (size_t word_index = 0; word_index < KEY_SIZE_WORDS; ++word_index) {
+    for (size_t byte_index = 0; byte_index < WORD_SIZE_BYTES; ++byte_index) {
+      size_t flat_index = (word_index * KEY_SIZE_WORDS) + byte_index;
+      key[word_index][byte_index] = flat_key[flat_index];
+    }
+  }
+  return key;
+}
+
 AES128Key gen_aes128_key(const RawBytes &flat_key);
 AES192Key gen_aes192_key(const RawBytes &flat_key);
 AES256Key gen_aes256_key(const RawBytes &flat_key);
@@ -86,7 +98,7 @@ RawBytes add_pkcs7_padding(const RawBytes &input,
                            const size_t block_size_bytes = BLOCK_SIZE_BYTES);
 
 RawBytes remove_pkcs7_padding(const RawBytes &input,
-                              const size_t block_size_bytes);
+                              const size_t block_size_bytes = BLOCK_SIZE_BYTES);
 
 RawBytes AES_128_CBC_encrypt(const RawBytes &plaintext_raw,
                              const RawBytes &key_raw, const RawBytes &iv_raw);
@@ -140,7 +152,7 @@ template <typename KeyType, typename KeyScheduleType> struct c_Encrypter {
       , m_key_schedule(gen_key_schedule(m_key)) {}
 
   c_Encrypter(const RawBytes &key_raw)
-      : c_Encrypter(gen_aes128_key(key_raw)) {}
+      : c_Encrypter(gen_key<KeyType>(key_raw)) {}
 
   ByteBlock encrypt(const ByteBlock &plaintext) const {
     ByteBlock output;

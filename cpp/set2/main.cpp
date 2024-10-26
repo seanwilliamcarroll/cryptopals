@@ -91,60 +91,6 @@ void c11() {
   }
 }
 
-RawBytes break_ecb_byte_at_a_time(const size_t block_size_bytes,
-                                  const size_t target_plaintext_length_bytes,
-                                  const c_AES128SecretKeyEncrypter &encrypter,
-                                  const RawBytes &target_plaintext_raw,
-                                  const bool display = false) {
-  RawBytes decrypted_raw(target_plaintext_length_bytes, 0);
-
-  std::vector<RawBytes> ciphertexts_raw;
-  ciphertexts_raw.reserve(block_size_bytes);
-  for (size_t prefix_length_bytes = 0; prefix_length_bytes < block_size_bytes;
-       ++prefix_length_bytes) {
-    const RawBytes test_prefix_raw = RawBytes(prefix_length_bytes, 'X');
-    ciphertexts_raw.push_back(
-        encrypter.encrypt(target_plaintext_raw, test_prefix_raw));
-  }
-
-  for (size_t byte_index = 0; byte_index < target_plaintext_length_bytes;
-       ++byte_index) {
-    const size_t prefix_length =
-        (int(block_size_bytes) - 1 - int(byte_index)) % block_size_bytes;
-    const size_t block_number = byte_index / block_size_bytes;
-
-    const RawBytes ciphertext_raw = ciphertexts_raw[prefix_length];
-
-    const ByteBlock block_of_interest =
-        from_raw_bytes_to_byte_block(ciphertext_raw, block_number);
-
-    RawBytes test_prefix_raw = RawBytes(prefix_length, 'X');
-    test_prefix_raw =
-        prepend_bytes(RawBytes(std::begin(decrypted_raw),
-                               std::begin(decrypted_raw) + byte_index),
-                      test_prefix_raw);
-    test_prefix_raw.push_back(0);
-    for (size_t test_byte = 0; test_byte < 256; ++test_byte) {
-      // Select which bytes to encrypt
-      test_prefix_raw.back() = test_byte;
-      const ByteBlock test_plaintext =
-          from_raw_bytes_to_byte_block(test_prefix_raw, block_number);
-      const ByteBlock test_block = encrypter.encrypt(test_plaintext);
-      if (block_of_interest == test_block) {
-        if (display) {
-          std::cout << char(test_byte) << std::flush;
-        }
-        decrypted_raw[byte_index] = test_byte;
-        break;
-      }
-    }
-  }
-  if (display) {
-    std::cout << std::endl;
-  }
-  return decrypted_raw;
-}
-
 void c12() {
   const RawBytes target_plaintext_raw = from_base64_string(
       "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4g"

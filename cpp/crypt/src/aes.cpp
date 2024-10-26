@@ -73,18 +73,6 @@ AES256KeySchedule gen_key_schedule(const AES256Key &key) {
   return gen_key_schedule<AES256KeySchedule, AES256Key>(key);
 }
 
-template <typename KeyType> KeyType gen_key(const RawBytes &flat_key) {
-  constexpr size_t KEY_SIZE_WORDS = std::tuple_size<KeyType>{};
-  KeyType key;
-  for (size_t word_index = 0; word_index < KEY_SIZE_WORDS; ++word_index) {
-    for (size_t byte_index = 0; byte_index < WORD_SIZE_BYTES; ++byte_index) {
-      size_t flat_index = (word_index * KEY_SIZE_WORDS) + byte_index;
-      key[word_index][byte_index] = flat_key[flat_index];
-    }
-  }
-  return key;
-}
-
 AES128Key gen_aes128_key(const RawBytes &flat_key) {
   return gen_key<AES128Key>(flat_key);
 }

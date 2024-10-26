@@ -39,3 +39,9 @@ size_t
 detect_length_bytes(size_t block_size_bytes,
                     const RawBytes &target_plaintext_raw,
                     std::function<RawBytes(RawBytes, RawBytes)> encrypt_func);
+
+RawBytes break_ecb_byte_at_a_time(size_t block_size_bytes,
+                                  size_t target_plaintext_length_bytes,
+                                  const c_AES128SecretKeyEncrypter &encrypter,
+                                  const RawBytes &target_plaintext_raw,
+                                  bool display = false);
