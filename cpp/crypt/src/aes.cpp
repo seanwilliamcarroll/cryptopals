@@ -85,55 +85,12 @@ AES256Key gen_aes256_key(const RawBytes &flat_key) {
   return gen_key<AES256Key>(flat_key);
 }
 
-template <typename KeyScheduleType>
-ByteBlock get_round_key(const KeyScheduleType &key_schedule,
-                        const size_t round_index) {
-  ByteBlock round_key = {{
-      key_schedule[(round_index * BLOCK_SIZE_WORDS)],
-      key_schedule[(round_index * BLOCK_SIZE_WORDS) + 1],
-      key_schedule[(round_index * BLOCK_SIZE_WORDS) + 2],
-      key_schedule[(round_index * BLOCK_SIZE_WORDS) + 3],
-  }};
-  return round_key;
-}
-
-template <typename KeyScheduleType>
-void add_round_key(ByteBlock &input, const KeyScheduleType &key_schedule,
-                   const size_t round_index) {
-  const ByteBlock round_key = get_round_key(key_schedule, round_index);
-  input = (input ^ round_key);
-}
-
 void quick_print(const size_t round_index, const std::string &msg,
                  const ByteBlock &state) {
   RawBytes state_raw = from_byte_block_to_raw_bytes(state);
   std::cout << "round[" << std::string(round_index < 10 ? " " : "")
             << std::to_string(round_index) << "]." << msg << "  :  ";
   to_hex_string(std::cout, state_raw) << std::endl;
-}
-
-template <typename KeyScheduleType>
-void AES_cipher(const ByteBlock &input, ByteBlock &output,
-                const KeyScheduleType &key_schedule) {
-  constexpr size_t KEY_SCHEDULE_SIZE_WORDS = std::tuple_size<KeyScheduleType>{};
-  constexpr size_t NUM_ROUNDS =
-      (KEY_SCHEDULE_SIZE_WORDS / BLOCK_SIZE_WORDS) - 1;
-
-  ByteBlock state(input);
-
-  add_round_key(state, key_schedule, 0);
-
-  for (size_t round_index = 1; round_index < NUM_ROUNDS; ++round_index) {
-    sub_bytes(state);
-    shift_rows(state);
-    mix_columns(state);
-    add_round_key(state, key_schedule, round_index);
-  }
-  sub_bytes(state);
-  shift_rows(state);
-  add_round_key(state, key_schedule, NUM_ROUNDS);
-
-  output = state;
 }
 
 void AES_128_cipher(const ByteBlock &input, ByteBlock &output,
@@ -151,30 +108,6 @@ void AES_256_cipher(const ByteBlock &input, ByteBlock &output,
   AES_cipher(input, output, key_schedule);
 }
 
-template <typename KeyScheduleType>
-void AES_inv_cipher(const ByteBlock &input, ByteBlock &output,
-                    const KeyScheduleType &key_schedule) {
-  constexpr size_t KEY_SCHEDULE_SIZE_WORDS = std::tuple_size<KeyScheduleType>{};
-  constexpr size_t NUM_ROUNDS =
-      (KEY_SCHEDULE_SIZE_WORDS / BLOCK_SIZE_WORDS) - 1;
-
-  ByteBlock state(input);
-
-  add_round_key(state, key_schedule, NUM_ROUNDS);
-
-  for (size_t round_index = NUM_ROUNDS - 1; round_index > 0; --round_index) {
-    inv_shift_rows(state);
-    inv_sub_bytes(state);
-    add_round_key(state, key_schedule, round_index);
-    inv_mix_columns(state);
-  }
-  inv_shift_rows(state);
-  inv_sub_bytes(state);
-  add_round_key(state, key_schedule, 0);
-
-  output = state;
-}
-
 void AES_128_inv_cipher(const ByteBlock &input, ByteBlock &output,
                         const AES128KeySchedule &key_schedule) {
   AES_inv_cipher(input, output, key_schedule);
@@ -188,26 +121,6 @@ void AES_192_inv_cipher(const ByteBlock &input, ByteBlock &output,
 void AES_256_inv_cipher(const ByteBlock &input, ByteBlock &output,
                         const AES256KeySchedule &key_schedule) {
   AES_inv_cipher(input, output, key_schedule);
-}
-
-template <typename KeyScheduleType>
-RawBytes AES_ECB_encrypt(const RawBytes &plaintext_raw,
-                         const KeyScheduleType &key_schedule) {
-  RawBytes plaintext_padded_raw =
-      add_pkcs7_padding(plaintext_raw, BLOCK_SIZE_BYTES);
-  RawBytes ciphertext_raw(plaintext_padded_raw.size());
-
-  const size_t num_blocks =
-      std::ceil<size_t>(double(plaintext_padded_raw.size()) / BLOCK_SIZE_BYTES);
-  for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
-    ByteBlock plaintext =
-        from_raw_bytes_to_byte_block(plaintext_padded_raw, block_index);
-    ByteBlock ciphertext;
-    AES_cipher(plaintext, ciphertext, key_schedule);
-
-    from_byte_block_to_raw_bytes(ciphertext, ciphertext_raw, block_index);
-  }
-  return ciphertext_raw;
 }
 
 RawBytes AES_128_ECB_encrypt(const RawBytes &plaintext_raw,
@@ -242,24 +155,6 @@ RawBytes AES_256_ECB_encrypt(const RawBytes &plaintext_raw,
   const auto aes_256_key_schedule = gen_key_schedule(aes_256_key);
   return AES_ECB_encrypt<AES256KeySchedule>(plaintext_raw,
                                             aes_256_key_schedule);
-}
-
-template <typename KeyScheduleType>
-RawBytes AES_ECB_decrypt(const RawBytes &ciphertext_raw,
-                         const KeyScheduleType &key_schedule) {
-  RawBytes plaintext_raw(ciphertext_raw.size());
-
-  const size_t num_blocks =
-      std::ceil<size_t>(double(ciphertext_raw.size()) / BLOCK_SIZE_BYTES);
-  for (size_t block_index = 0; block_index < num_blocks; ++block_index) {
-    ByteBlock ciphertext =
-        from_raw_bytes_to_byte_block(ciphertext_raw, block_index);
-    ByteBlock plaintext;
-    AES_inv_cipher(ciphertext, plaintext, key_schedule);
-
-    from_byte_block_to_raw_bytes(plaintext, plaintext_raw, block_index);
-  }
-  return remove_pkcs7_padding(plaintext_raw, BLOCK_SIZE_BYTES);
 }
 
 RawBytes AES_128_ECB_decrypt(const RawBytes &ciphertext_raw,

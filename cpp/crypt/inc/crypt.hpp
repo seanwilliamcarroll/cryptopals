@@ -2,6 +2,7 @@
 
 #include <aes.hpp>
 #include <block.hpp>
+#include <cookie.hpp>
 #include <freq_map.hpp>
 #include <raw_bytes.hpp>
 #include <util.hpp>

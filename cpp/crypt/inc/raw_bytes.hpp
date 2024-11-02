@@ -21,7 +21,14 @@ char to_hex_char(uint8_t input);
 
 std::ostream &to_hex_string(std::ostream &out, const RawBytes &input);
 
+std::ostream &to_hex_string_in_blocks(std::ostream &out, const RawBytes &input,
+                                      size_t block_size_bytes);
+
 std::ostream &to_base64_string(std::ostream &out, const RawBytes &input);
+
+std::ostream &to_ascii_string_in_blocks(std::ostream &out,
+                                        const RawBytes &input,
+                                        size_t block_size_bytes);
 
 std::ostream &to_ascii_string(std::ostream &out, const RawBytes &input);
 

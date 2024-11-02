@@ -59,6 +59,12 @@ std::string load_and_strip(const std::string &filename) {
   return strip_newlines(base64_input);
 }
 
+void throw_invalid_argument(const std::string &input) {
+  std::stringstream error_stream;
+  error_stream << "Unexpected string: \"" << input << "\"";
+  throw std::invalid_argument(error_stream.str());
+}
+
 void throw_invalid_argument(uint8_t input) {
   std::stringstream error_stream;
   error_stream << "Unexpected character: " << char(input)

@@ -14,4 +14,6 @@ std::string strip_newlines(const std::string &input);
 
 std::string load_and_strip(const std::string &filename);
 
+void throw_invalid_argument(const std::string &input);
+
 void throw_invalid_argument(uint8_t input);

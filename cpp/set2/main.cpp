@@ -131,13 +131,85 @@ void c12() {
   to_ascii_string(std::cout, decrypted_raw) << std::endl;
 }
 
+void do_attack(c_AES128SecretKeyEncrypter &encrypter) {
+
+  const std::string email =
+      "123456789@admin" + std::string(char(16 - 5), 16 - 5);
+  const std::string profile_cookie_string = profile_for(email);
+  const RawBytes plaintext_raw = from_ascii_string(profile_cookie_string);
+
+  to_ascii_string_in_blocks(std::cout, plaintext_raw, 16);
+
+  const RawBytes ciphertext_raw = encrypter.encrypt(plaintext_raw);
+
+  to_hex_string_in_blocks(std::cout, ciphertext_raw, 16);
+
+  const ByteBlock second_block =
+      from_raw_bytes_to_byte_block(ciphertext_raw, 1);
+
+  const std::string final_email = "my__@admin.com";
+  const std::string final_profile_cookie_string = profile_for(final_email);
+
+  const RawBytes final_plaintext_raw =
+      from_ascii_string(final_profile_cookie_string);
+
+  to_ascii_string_in_blocks(std::cout, final_plaintext_raw, 16);
+
+  RawBytes final_ciphertext_raw = encrypter.encrypt(final_plaintext_raw);
+
+  to_hex_string_in_blocks(std::cout, final_ciphertext_raw, 16);
+
+  from_byte_block_to_raw_bytes(second_block, final_ciphertext_raw, 2);
+
+  to_hex_string_in_blocks(std::cout, final_ciphertext_raw, 16);
+
+  const RawBytes attacked_plaintext_raw =
+      encrypter.decrypt(final_ciphertext_raw);
+
+  std::cout << "Attacked cookie: " << std::endl;
+  to_ascii_string(std::cout, attacked_plaintext_raw) << std::endl;
+}
+
+void c13() {
+  const std::string email = "my_email@gmail.com&role=admin";
+  const std::string profile_cookie = profile_for(email);
+
+  std::cout << "Email: " << email << std::endl;
+  std::cout << "Profile cookie: " << profile_cookie << std::endl;
+
+  c_AES128SecretKeyEncrypter encrypter;
+
+  const RawBytes plaintext_raw = from_ascii_string(profile_cookie);
+
+  const RawBytes ciphertext_raw = encrypter.encrypt(plaintext_raw);
+
+  do_attack(encrypter);
+
+  // const RawBytes attacked_ciphertext_raw = do_attack(encrypter);
+
+  // const RawBytes plaintext_recreated_raw = encrypter.decrypt(ciphertext_raw);
+
+  // std::cout << "Original plaintext : " << std::endl;
+  // to_ascii_string(std::cout, plaintext_raw) << std::endl;
+
+  // std::cout << "Ciphertext         : " << std::endl;
+  // to_hex_string(std::cout, ciphertext_raw) << std::endl;
+
+  // std::cout << "Attacked Ciphertext: " << std::endl;
+  // to_hex_string(std::cout, ciphertext_raw) << std::endl;
+
+  // std::cout << "Final plaintext    : " << std::endl;
+  // to_ascii_string(std::cout, plaintext_recreated_raw) << std::endl;
+}
+
 int main() {
   std::cout << "Cryptopals set2" << std::endl;
 
   // c9();
   // c10();
   // c11();
-  c12();
+  // c12();
+  c13();
 
   return 0;
 }
